@@ -35,7 +35,7 @@ Name: "{app}\ASCOM.DeepSkyDad.AF1"
 ; TODO: Add subfolders below {app} as needed (e.g. Name: "{app}\MyFolder")
 
 [Files]
-Source: "D:\Projects\DeepSkyDad.AF1\DeepSkyDad.AF1.ASCOM\bin\Release\ASCOM.DeepSkyDad.AF1.dll"; DestDir: "{app}\ASCOM.DeepSkyDad.AF1"
+Source: "D:\Projects\DeepSkyDad.AF1\DeepSkyDad.AF1.ASCOM\bin\Release\ASCOM.DeepSkyDad.AF1.Focuser.dll"; DestDir: "{app}\ASCOM.DeepSkyDad.AF1"
 ; Require a read-me HTML to appear after installation, maybe driver's Help doc
 Source: "D:\Projects\DeepSkyDad.AF1\DeepSkyDad.AF1.ASCOM\ReadMe.htm"; DestDir: "{app}\ASCOM.DeepSkyDad.AF1"; Flags: isreadme
 ; TODO: Add other files needed by your driver here (add subfolders above)
@@ -44,8 +44,8 @@ Source: "D:\Projects\DeepSkyDad.AF1\DeepSkyDad.AF1.ASCOM\readme.jpg"; DestDir: "
 ; Only if driver is .NET
 [Run]
 ; Only for .NET assembly/in-proc drivers
-Filename: "{dotnet4032}\regasm.exe"; Parameters: "/codebase ""{app}\ASCOM.DeepSkyDad.AF1\ASCOM.DeepSkyDad.AF1.dll"""; Flags: runhidden 32bit
-Filename: "{dotnet4064}\regasm.exe"; Parameters: "/codebase ""{app}\ASCOM.DeepSkyDad.AF1\ASCOM.DeepSkyDad.AF1.dll"""; Flags: runhidden 64bit; Check: IsWin64
+Filename: "{dotnet4032}\regasm.exe"; Parameters: "/codebase ""{app}\ASCOM.DeepSkyDad.AF1\ASCOM.DeepSkyDad.AF1.Focuser.dll"""; Flags: runhidden 32bit
+Filename: "{dotnet4064}\regasm.exe"; Parameters: "/codebase ""{app}\ASCOM.DeepSkyDad.AF1\ASCOM.DeepSkyDad.AF1.Focuser.dll"""; Flags: runhidden 64bit; Check: IsWin64
 
 
 
@@ -53,15 +53,10 @@ Filename: "{dotnet4064}\regasm.exe"; Parameters: "/codebase ""{app}\ASCOM.DeepSk
 ; Only if driver is .NET
 [UninstallRun]
 ; Only for .NET assembly/in-proc drivers
-Filename: "{dotnet4032}\regasm.exe"; Parameters: "-u ""{app}\ASCOM.DeepSkyDad.AF1\ASCOM.DeepSkyDad.AF1.dll"""; Flags: runhidden 32bit
+Filename: "{dotnet4032}\regasm.exe"; Parameters: "-u ""{app}\ASCOM.DeepSkyDad.AF1\ASCOM.DeepSkyDad.AF1.Focuser.dll"""; Flags: runhidden 32bit
 ; This helps to give a clean uninstall
-Filename: "{dotnet4064}\regasm.exe"; Parameters: "/codebase ""{app}\ASCOM.DeepSkyDad.AF1\ASCOM.DeepSkyDad.AF1.dll"""; Flags: runhidden 64bit; Check: IsWin64
-Filename: "{dotnet4064}\regasm.exe"; Parameters: "-u ""{app}\ASCOM.DeepSkyDad.AF1\ASCOM.DeepSkyDad.AF1.dll"""; Flags: runhidden 64bit; Check: IsWin64
-; Only for .NET assembly/in-proc drivers
-Filename: "{dotnet4032}\regasm.exe"; Parameters: "-u ""{app}\ASCOM.DeepSkyDad.Focuser\ASCOM.DeepSkyDad.Focuser.dll"""; Flags: runhidden 32bit
-; This helps to give a clean uninstall
-Filename: "{dotnet4064}\regasm.exe"; Parameters: "/codebase ""{app}\ASCOM.DeepSkyDad.Focuser\ASCOM.DeepSkyDad.Focuser.dll"""; Flags: runhidden 64bit; Check: IsWin64
-Filename: "{dotnet4064}\regasm.exe"; Parameters: "-u ""{app}\ASCOM.DeepSkyDad.Focuser\ASCOM.DeepSkyDad.Focuser.dll"""; Flags: runhidden 64bit; Check: IsWin64
+Filename: "{dotnet4064}\regasm.exe"; Parameters: "/codebase ""{app}\ASCOM.DeepSkyDad.AF1\ASCOM.DeepSkyDad.AF1.Focuser.dll"""; Flags: runhidden 64bit; Check: IsWin64
+Filename: "{dotnet4064}\regasm.exe"; Parameters: "-u ""{app}\ASCOM.DeepSkyDad.AF1\ASCOM.DeepSkyDad.AF1.Focuser.dll"""; Flags: runhidden 64bit; Check: IsWin64
 
 
 

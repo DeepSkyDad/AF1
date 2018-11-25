@@ -141,7 +141,6 @@
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
     <Content Include="ASCOM.ico" />
-    <Content Include="DeepSkyDad AF1 Setup.exe" />
     <Content Include="DeepSkyDad AF1 Setup.iss" />
     <Content Include="DeepSkyDad AF1 Test.js" />
     <Content Include="ReadMe.htm" />

@@ -37,14 +37,11 @@ namespace ASCOM.DeepSkyDad.AF1
             this.comboBoxStepSize = new System.Windows.Forms.ComboBox();
             this.chkResetOnConnet = new System.Windows.Forms.CheckBox();
             this.label3 = new System.Windows.Forms.Label();
-            this.numericUpMaxPosition = new System.Windows.Forms.NumericUpDown();
-            this.label5 = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
             this.chkAlwaysOn = new System.Windows.Forms.CheckBox();
             this.numericUpDownSettleBuffer = new System.Windows.Forms.NumericUpDown();
             this.label4 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.picASCOM)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.numericUpMaxPosition)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownSettleBuffer)).BeginInit();
             this.SuspendLayout();
             // 
@@ -52,7 +49,7 @@ namespace ASCOM.DeepSkyDad.AF1
             // 
             this.cmdOK.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.cmdOK.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.cmdOK.Location = new System.Drawing.Point(109, 273);
+            this.cmdOK.Location = new System.Drawing.Point(106, 245);
             this.cmdOK.Name = "cmdOK";
             this.cmdOK.Size = new System.Drawing.Size(59, 24);
             this.cmdOK.TabIndex = 0;
@@ -64,7 +61,7 @@ namespace ASCOM.DeepSkyDad.AF1
             // 
             this.cmdCancel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.cmdCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.cmdCancel.Location = new System.Drawing.Point(174, 273);
+            this.cmdCancel.Location = new System.Drawing.Point(171, 245);
             this.cmdCancel.Name = "cmdCancel";
             this.cmdCancel.Size = new System.Drawing.Size(59, 25);
             this.cmdCancel.TabIndex = 1;
@@ -77,7 +74,7 @@ namespace ASCOM.DeepSkyDad.AF1
             this.picASCOM.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.picASCOM.Cursor = System.Windows.Forms.Cursors.Hand;
             this.picASCOM.Image = global::ASCOM.DeepSkyDad.AF1.Properties.Resources.ASCOM;
-            this.picASCOM.Location = new System.Drawing.Point(288, 9);
+            this.picASCOM.Location = new System.Drawing.Point(286, 9);
             this.picASCOM.Name = "picASCOM";
             this.picASCOM.Size = new System.Drawing.Size(48, 56);
             this.picASCOM.SizeMode = System.Windows.Forms.PictureBoxSizeMode.AutoSize;
@@ -98,7 +95,7 @@ namespace ASCOM.DeepSkyDad.AF1
             // chkTrace
             // 
             this.chkTrace.AutoSize = true;
-            this.chkTrace.Location = new System.Drawing.Point(160, 195);
+            this.chkTrace.Location = new System.Drawing.Point(159, 170);
             this.chkTrace.Name = "chkTrace";
             this.chkTrace.Size = new System.Drawing.Size(69, 17);
             this.chkTrace.TabIndex = 6;
@@ -130,7 +127,7 @@ namespace ASCOM.DeepSkyDad.AF1
             // chkResetOnConnet
             // 
             this.chkResetOnConnet.AutoSize = true;
-            this.chkResetOnConnet.Location = new System.Drawing.Point(160, 218);
+            this.chkResetOnConnet.Location = new System.Drawing.Point(159, 193);
             this.chkResetOnConnet.Name = "chkResetOnConnet";
             this.chkResetOnConnet.Size = new System.Drawing.Size(173, 17);
             this.chkResetOnConnet.TabIndex = 9;
@@ -148,37 +145,6 @@ namespace ASCOM.DeepSkyDad.AF1
             this.label3.Text = "Step size";
             this.label3.Click += new System.EventHandler(this.label3_Click);
             // 
-            // numericUpMaxPosition
-            // 
-            this.numericUpMaxPosition.Location = new System.Drawing.Point(160, 140);
-            this.numericUpMaxPosition.Maximum = new decimal(new int[] {
-            65000,
-            0,
-            0,
-            0});
-            this.numericUpMaxPosition.Minimum = new decimal(new int[] {
-            10000,
-            0,
-            0,
-            0});
-            this.numericUpMaxPosition.Name = "numericUpMaxPosition";
-            this.numericUpMaxPosition.Size = new System.Drawing.Size(120, 20);
-            this.numericUpMaxPosition.TabIndex = 11;
-            this.numericUpMaxPosition.Value = new decimal(new int[] {
-            10000,
-            0,
-            0,
-            0});
-            // 
-            // label5
-            // 
-            this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(13, 144);
-            this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(123, 13);
-            this.label5.TabIndex = 13;
-            this.label5.Text = "Max. position (10k - 65k)";
-            // 
             // label1
             // 
             this.label1.AutoSize = true;
@@ -193,7 +159,7 @@ namespace ASCOM.DeepSkyDad.AF1
             // chkAlwaysOn
             // 
             this.chkAlwaysOn.AutoSize = true;
-            this.chkAlwaysOn.Location = new System.Drawing.Point(160, 242);
+            this.chkAlwaysOn.Location = new System.Drawing.Point(159, 217);
             this.chkAlwaysOn.Name = "chkAlwaysOn";
             this.chkAlwaysOn.Size = new System.Drawing.Size(182, 17);
             this.chkAlwaysOn.TabIndex = 15;
@@ -203,7 +169,7 @@ namespace ASCOM.DeepSkyDad.AF1
             // 
             // numericUpDownSettleBuffer
             // 
-            this.numericUpDownSettleBuffer.Location = new System.Drawing.Point(160, 166);
+            this.numericUpDownSettleBuffer.Location = new System.Drawing.Point(159, 141);
             this.numericUpDownSettleBuffer.Maximum = new decimal(new int[] {
             5000,
             0,
@@ -216,7 +182,7 @@ namespace ASCOM.DeepSkyDad.AF1
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(16, 170);
+            this.label4.Location = new System.Drawing.Point(15, 145);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(138, 13);
             this.label4.TabIndex = 17;
@@ -226,13 +192,11 @@ namespace ASCOM.DeepSkyDad.AF1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(346, 309);
+            this.ClientSize = new System.Drawing.Size(344, 306);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.numericUpDownSettleBuffer);
             this.Controls.Add(this.chkAlwaysOn);
             this.Controls.Add(this.label1);
-            this.Controls.Add(this.label5);
-            this.Controls.Add(this.numericUpMaxPosition);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.chkResetOnConnet);
             this.Controls.Add(this.comboBoxStepSize);
@@ -248,9 +212,8 @@ namespace ASCOM.DeepSkyDad.AF1
             this.Name = "SetupDialogForm";
             this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "DeepSkyDad Setup";
+            this.Text = "DeepSkyDad AF1 Setup";
             ((System.ComponentModel.ISupportInitialize)(this.picASCOM)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.numericUpMaxPosition)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownSettleBuffer)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -268,8 +231,6 @@ namespace ASCOM.DeepSkyDad.AF1
         private System.Windows.Forms.ComboBox comboBoxStepSize;
         private System.Windows.Forms.CheckBox chkResetOnConnet;
         private System.Windows.Forms.Label label3;
-        private System.Windows.Forms.NumericUpDown numericUpMaxPosition;
-        private System.Windows.Forms.Label label5;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.CheckBox chkAlwaysOn;
         private System.Windows.Forms.NumericUpDown numericUpDownSettleBuffer;

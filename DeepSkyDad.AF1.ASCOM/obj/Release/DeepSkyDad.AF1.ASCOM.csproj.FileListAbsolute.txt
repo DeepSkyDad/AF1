@@ -1,7 +1,3 @@
-D:\Projects\DeepSkyDad.AF1\DeepSkyDad.AF1.ASCOM\bin\Release\ASCOM.DeepSkyDad.AF1.dll
-D:\Projects\DeepSkyDad.AF1\DeepSkyDad.AF1.ASCOM\bin\Release\ASCOM.DeepSkyDad.AF1.dll.config
-D:\Projects\DeepSkyDad.AF1\DeepSkyDad.AF1.ASCOM\bin\Release\ASCOM.DeepSkyDad.AF1.pdb
-D:\Projects\DeepSkyDad.AF1\DeepSkyDad.AF1.ASCOM\bin\Release\ASCOM.DeepSkyDad.AF1.tlb
 D:\Projects\DeepSkyDad.AF1\DeepSkyDad.AF1.ASCOM\bin\Release\ASCOM.Astrometry.dll
 D:\Projects\DeepSkyDad.AF1\DeepSkyDad.AF1.ASCOM\bin\Release\ASCOM.Attributes.dll
 D:\Projects\DeepSkyDad.AF1\DeepSkyDad.AF1.ASCOM\bin\Release\ASCOM.Controls.dll
@@ -20,9 +16,14 @@ D:\Projects\DeepSkyDad.AF1\DeepSkyDad.AF1.ASCOM\bin\Release\ASCOM.SettingsProvid
 D:\Projects\DeepSkyDad.AF1\DeepSkyDad.AF1.ASCOM\bin\Release\ASCOM.Utilities.xml
 D:\Projects\DeepSkyDad.AF1\DeepSkyDad.AF1.ASCOM\bin\Release\ASCOM.Internal.Extensions.xml
 D:\Projects\DeepSkyDad.AF1\DeepSkyDad.AF1.ASCOM\obj\Release\ASCOM.DeepSkyDad.AF1.Properties.Resources.resources
-D:\Projects\DeepSkyDad.AF1\DeepSkyDad.AF1.ASCOM\obj\Release\ASCOM.DeepSkyDad.SetupDialogForm.resources
 D:\Projects\DeepSkyDad.AF1\DeepSkyDad.AF1.ASCOM\obj\Release\DeepSkyDad.AF1.ASCOM.csproj.GenerateResource.cache
 D:\Projects\DeepSkyDad.AF1\DeepSkyDad.AF1.ASCOM\obj\Release\DeepSkyDad.AF1.ASCOM.csproj.CoreCompileInputs.cache
 D:\Projects\DeepSkyDad.AF1\DeepSkyDad.AF1.ASCOM\obj\Release\DeepSkyDad.AF1.ASCOM.csproj.CopyComplete
-D:\Projects\DeepSkyDad.AF1\DeepSkyDad.AF1.ASCOM\obj\Release\ASCOM.DeepSkyDad.AF1.dll
-D:\Projects\DeepSkyDad.AF1\DeepSkyDad.AF1.ASCOM\obj\Release\ASCOM.DeepSkyDad.AF1.pdb
+D:\Projects\DeepSkyDad.AF1\DeepSkyDad.AF1.ASCOM\bin\Release\ASCOM.DeepSkyDad.AF1.Focuser.dll.config
+D:\Projects\DeepSkyDad.AF1\DeepSkyDad.AF1.ASCOM\bin\Release\ASCOM.DeepSkyDad.AF1.Focuser.dll
+D:\Projects\DeepSkyDad.AF1\DeepSkyDad.AF1.ASCOM\bin\Release\ASCOM.DeepSkyDad.AF1.Focuser.pdb
+D:\Projects\DeepSkyDad.AF1\DeepSkyDad.AF1.ASCOM\bin\Release\ASCOM.DeepSkyDad.AF1.Focuser.tlb
+D:\Projects\DeepSkyDad.AF1\DeepSkyDad.AF1.ASCOM\obj\Release\DeepSkyDad.AF1.ASCOM.csprojAssemblyReference.cache
+D:\Projects\DeepSkyDad.AF1\DeepSkyDad.AF1.ASCOM\obj\Release\ASCOM.DeepSkyDad.AF1.SetupDialogForm.resources
+D:\Projects\DeepSkyDad.AF1\DeepSkyDad.AF1.ASCOM\obj\Release\ASCOM.DeepSkyDad.AF1.Focuser.dll
+D:\Projects\DeepSkyDad.AF1\DeepSkyDad.AF1.ASCOM\obj\Release\ASCOM.DeepSkyDad.AF1.Focuser.pdb

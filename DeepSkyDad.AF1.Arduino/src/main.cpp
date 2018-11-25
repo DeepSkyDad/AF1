@@ -440,8 +440,6 @@ void loop()
       eepromWrite();
       _eepromSaveAfState = false;
     }
-
-    delay(100);
   }
 }
 

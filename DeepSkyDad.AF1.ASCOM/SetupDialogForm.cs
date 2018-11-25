@@ -24,7 +24,7 @@ namespace ASCOM.DeepSkyDad.AF1
             // Place any validation constraint checks here
             // Update the state variables with results from the dialogue
             Focuser.comPort = (string)comboBoxComPort.SelectedItem;
-            Focuser.maxPosition = (int)numericUpMaxPosition.Value;
+            //Focuser.maxPosition = (int)numericUpMaxPosition.Value;
             Focuser.stepSize = (string)comboBoxStepSize.SelectedItem;
             Focuser.traceState = chkTrace.Checked;
             Focuser.resetOnConnect = chkResetOnConnet.Checked;
@@ -57,7 +57,7 @@ namespace ASCOM.DeepSkyDad.AF1
         private void InitUI()
         {
             chkTrace.Checked = Focuser.traceState;
-            numericUpMaxPosition.Value = Focuser.maxPosition;
+            //numericUpMaxPosition.Value = Focuser.maxPosition;
             comboBoxStepSize.Text = Focuser.stepSize;
             chkResetOnConnet.Checked = Focuser.resetOnConnect;
             chkAlwaysOn.Checked = Focuser.alwaysOn;

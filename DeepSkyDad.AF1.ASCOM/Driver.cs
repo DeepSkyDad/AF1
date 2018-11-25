@@ -80,8 +80,8 @@ namespace ASCOM.DeepSkyDad.AF1
         internal static string traceStateDefault = "false";
         internal static string stepSizeProfileName = "Step size";
         internal static string stepSizeDefault = "1/2";
-        internal static string maxPositionProfileName = "Maximum positions";
-        internal static string maxPositionDefault = "10000";
+        //internal static string maxPositionProfileName = "Maximum positions";
+        //internal static string maxPositionDefault = "10000";
         internal static string resetOnConnectProfileName = "Reset on connect";
         internal static string resetOnConnectDefault = "false";
         internal static string alwaysOnProfileName = "Always on";
@@ -90,13 +90,16 @@ namespace ASCOM.DeepSkyDad.AF1
         internal static string settleBufferDefault = "0";
 
         internal static string comPort; // Variables to hold the currrent device configuration
-        internal static int maxPosition;
+        //internal static int maxPosition;
         internal static string stepSize;
         internal static bool traceState;
         internal static bool resetOnConnect;
         internal static bool alwaysOn;
         internal static int settleBuffer;
         internal static int commandTimeout = 2000;
+
+        internal static int? maxIncrement = null;
+        internal static int? maxStep = null;
 
         private Serial serial;
 
@@ -417,7 +420,11 @@ namespace ASCOM.DeepSkyDad.AF1
         {
             get
             {
-                var maxIncrement = CommandLong("GMXS");
+                if(maxIncrement == null)
+                {
+                    maxIncrement = (int)CommandLong("GMXS");
+                }
+               
                 tl.LogMessage("MaxIncrement Get", maxIncrement.ToString());
                 return (int)maxIncrement; // Maximum change in one move
             }
@@ -427,7 +434,11 @@ namespace ASCOM.DeepSkyDad.AF1
         {
             get
             {
-                var maxStep = CommandLong("GMXP");
+                if(maxStep == null)
+                {
+                    maxStep = (int?)CommandLong("GMXP");
+                }
+                
                 tl.LogMessage("MaxStep Get", maxStep.ToString());
                 return (int)maxStep; // Maximum extent of the focuser, so position range is 0 to 10,000
             }
@@ -606,7 +617,7 @@ namespace ASCOM.DeepSkyDad.AF1
                 driverProfile.DeviceType = "Focuser";
                 traceState = Convert.ToBoolean(driverProfile.GetValue(driverID, traceStateProfileName, string.Empty, traceStateDefault));
                 comPort = driverProfile.GetValue(driverID, comPortProfileName, string.Empty, comPortDefault);
-                maxPosition = Convert.ToInt32(driverProfile.GetValue(driverID, maxPositionProfileName, string.Empty, maxPositionDefault));
+                //maxPosition = Convert.ToInt32(driverProfile.GetValue(driverID, maxPositionProfileName, string.Empty, maxPositionDefault));
                 stepSize = driverProfile.GetValue(driverID, stepSizeProfileName, string.Empty, stepSizeDefault);
                 resetOnConnect = Convert.ToBoolean(driverProfile.GetValue(driverID, resetOnConnectProfileName, string.Empty, resetOnConnectDefault));
                 alwaysOn = Convert.ToBoolean(driverProfile.GetValue(driverID, alwaysOnProfileName, string.Empty, alwaysOnDefault));
@@ -625,7 +636,7 @@ namespace ASCOM.DeepSkyDad.AF1
                 driverProfile.WriteValue(driverID, traceStateProfileName, traceState.ToString());
                 driverProfile.WriteValue(driverID, comPortProfileName, comPort.ToString());
                 driverProfile.WriteValue(driverID, stepSizeProfileName, stepSize);
-                driverProfile.WriteValue(driverID, maxPositionProfileName, maxPosition.ToString());
+                //driverProfile.WriteValue(driverID, maxPositionProfileName, maxPosition.ToString());
                 driverProfile.WriteValue(driverID, resetOnConnectProfileName, resetOnConnect.ToString());
                 driverProfile.WriteValue(driverID, alwaysOnProfileName, alwaysOn.ToString());
                 driverProfile.WriteValue(driverID, settleBufferProfileName, settleBuffer.ToString());
