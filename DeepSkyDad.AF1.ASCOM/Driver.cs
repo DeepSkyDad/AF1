@@ -266,7 +266,6 @@ namespace ASCOM.DeepSkyDad.AF1
                     if (actualFirmwareVersion != firmwareVersion)
                         throw new ASCOM.DriverException($"Invalid firmware version - required: {firmwareVersion}, installed {actualFirmwareVersion}");
 
-                    focuserPosition = (int)CommandLong("GPOS");
                     if (resetOnConnect)
                     {
                         //deselect the flag
@@ -280,6 +279,7 @@ namespace ASCOM.DeepSkyDad.AF1
                         CommandString("RSET");
                     }
 
+                    focuserPosition = (int)CommandLong("GPOS");
                     CommandString($"SAON{(alwaysOn ? 1 : 0)}");
                     CommandString($"SBUF{settleBuffer}");
 
