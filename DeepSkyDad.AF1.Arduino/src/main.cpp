@@ -51,7 +51,7 @@ bool _eepromSaveAfState;
 //current limiting pin. To set specific current, change PWM to specific voltage.
 //equation: CURRENT=2.2−0.63*MP6500_PIN_I1
 #define MP6500_PIN_I1 6
-#define MP6500_PIN_I1_ALWAYS_ON 160
+#define MP6500_PIN_I1_ALWAYS_ON 170
 #define MP6500_PIN_I1_MOVING 155
 // MS1/MS2 sets stepping mode 00 = F, 10 = 1/2, 01 = 1/4, 11 = 1/8
 // steps per revolution = 200, 400, 800, 1600
@@ -66,12 +66,13 @@ long _motorTargetPosition;
 long _motorSettleBufferPrevMs;
 
 /* Serial communication */
-String _commandRaw;
-String _command;
-String _commandParam;
+char _serialCommandRaw[20];
+int _serialCommandRawIdx;
+char _command[20];
+char _commandParam[20];
 
-const String programName = "DeepSkyDad.AF1";
-const String programVersion = "1.0.0";
+const char programName[] = "DeepSkyDad.AF1";
+const char programVersion[] = "1.0.0";
 
 /* EEPROM functions */
 bool eepromValidateChecksum()
@@ -206,7 +207,7 @@ void printResponse(long response)
   Serial.print(")");
 }
 
-void printResponse(String response)
+void printResponse(char response[])
 {
   Serial.print("(");
   Serial.print(response);
@@ -218,7 +219,7 @@ void printSuccess()
   Serial.print("(OK)");
 }
 
-void printResponseErrorCode(String code)
+void printResponseErrorCode(int code)
 {
   Serial.print("!");
   Serial.print(code);
@@ -227,24 +228,29 @@ void printResponseErrorCode(String code)
 
 void executeCommand()
 {
-  if (_command == "GFRM")
+  if (strcmp("GFRM", _command) == 0)
   {
-    printResponse("Board=" + programName + ", Version=" + programVersion);
+    Serial.print("(");
+    Serial.print("Board=");
+    Serial.print(programName);
+    Serial.print(", Version=");
+    Serial.print(programVersion);
+    Serial.print(")");
   }
-  else if (_command == "GPOS")
+  else if (strcmp("GPOS", _command) == 0)
   {
     printResponse((int)_eepromAfState[EEPROM_AF_STATE_POSITION]);
   }
-  else if (_command == "GTRG")
+  else if (strcmp("GTRG", _command) == 0)
   {
     printResponse((int)_motorTargetPosition);
   }
-  else if (_command == "STRG")
+  else if (strcmp("STRG", _command) == 0)
   {
-    long pos = (long)_commandParam.toInt();
+    long pos = strtol(_commandParam, NULL, 10);
     if (abs(_eepromAfState[EEPROM_AF_STATE_POSITION] - pos) > _eepromAfState[EEPROM_AF_STATE_MAX_MOVEMENT] || pos < 0)
     {
-      printResponseErrorCode("101");
+      printResponseErrorCode(101);
     }
     else
     {
@@ -253,7 +259,7 @@ void executeCommand()
       printSuccess();
     }
   }
-  else if (_command == "GMOV")
+  else if (strcmp("GMOV", _command) == 0)
   {
     if (_motorIsMoving)
     {
@@ -286,32 +292,32 @@ void executeCommand()
       }
     }
   }
-  else if (_command == "SMOV")
+  else if (strcmp("SMOV", _command) == 0)
   {
     _motorIsMoving = true;
   }
-  else if (_command == "STOP")
+  else if (strcmp("STOP", _command) == 0)
   {
     stopMotor();
   }
-  else if (_command == "GMXP")
+  else if (strcmp("GMXP", _command) == 0)
   {
     printResponse((long)_eepromAfState[EEPROM_AF_STATE_MAX_POSITION]);
   }
-  else if (_command == "GMXS")
+  else if (strcmp("GMXS", _command) == 0)
   {
     printResponse((long)_eepromAfState[EEPROM_AF_STATE_MAX_MOVEMENT]);
   }
-  else if (_command == "GSTP")
+  else if (strcmp("GSTP", _command) == 0)
   {
     printResponse((int)_eepromAfState[EEPROM_AF_STATE_STEP_MODE]);
   }
-  else if (_command == "SSTP")
+  else if (strcmp("SSTP", _command) == 0)
   {
-    long sm = _commandParam.toInt();
+    long sm = strtol(_commandParam, NULL, 10);
     if (sm != 1 && sm != 2 && sm != 4 && sm != 8 && sm != 16)
     {
-      printResponseErrorCode("102");
+      printResponseErrorCode(102);
     }
     else
     {
@@ -320,40 +326,40 @@ void executeCommand()
       printSuccess();
     }
   }
-  else if (_command == "RSET")
+  else if (strcmp("RSET", _command) == 0)
   {
     eepromResetState();
     printSuccess();
   }
-  else if (_command == "GAON")
+  else if (strcmp("GAON", _command) == 0)
   {
     printResponse((int)_eepromAfState[EEPROM_AF_STATE_IS_ALWAYS_ON]);
   }
-  else if (_command == "SAON")
+  else if (strcmp("SAON", _command) == 0)
   {
-    _eepromAfState[EEPROM_AF_STATE_IS_ALWAYS_ON] = _commandParam.toInt();
+    _eepromAfState[EEPROM_AF_STATE_IS_ALWAYS_ON] = strtol(_commandParam, NULL, 10);
     _eepromSaveAfState = true;
     setAlwaysOn();
     printSuccess();
   }
-  else if (_command == "GBUF")
+  else if (strcmp("GBUF", _command) == 0)
   {
     printResponse((int)_eepromAfState[EEPROM_AF_STATE_SETTLE_BUFFER_MS]);
   }
-  else if (_command == "SBUF")
+  else if (strcmp("SBUF", _command) == 0)
   {
-    _eepromAfState[EEPROM_AF_STATE_SETTLE_BUFFER_MS] = _commandParam.toInt();
+    _eepromAfState[EEPROM_AF_STATE_SETTLE_BUFFER_MS] = strtol(_commandParam, NULL, 10);
     _eepromSaveAfState = true;
     printSuccess();
   }
-  else if (_command == "WEPR")
+  else if (strcmp("WEPR", _command) == 0)
   {
     _eepromSaveAfState = true;
     printSuccess();
   }
   else
   {
-    printResponseErrorCode("100");
+    printResponseErrorCode(100);
   }
 }
 
@@ -451,28 +457,32 @@ void serialEvent()
 
     if (c == '[')
     {
-      _commandRaw = "";
+      _serialCommandRawIdx = 0;
+      memset(_serialCommandRaw, 0, 20);
     }
     else if (c == ']')
     {
-      int len = _commandRaw.length();
+     
+      int len = strlen(_serialCommandRaw);
+      memset(_command, 0, 20);
+      memset(_commandParam, 0, 20);
+      
       if (len >= 4)
       {
-        _command = _commandRaw.substring(0, 4);
+        strncpy(_command, _serialCommandRaw, 4);
       }
       if (len > 4)
       {
-        _commandParam = _commandRaw.substring(4, len);
+        strncpy(_commandParam, _serialCommandRaw + 4, len - 4);
       }
-
-      _commandRaw = "";
 
       executeCommand();
       break;
     }
     else
     {
-      _commandRaw += c;
+      _serialCommandRaw[_serialCommandRawIdx] = c;
+      _serialCommandRawIdx++;
     }
   }
 }
