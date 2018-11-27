@@ -37,7 +37,7 @@
 
 //{<position>, <maxPosition>, <maxMovement>, <stepMode>, <isAlwaysOn>, <settleBufferMs>, <checksum>}
 long _eepromAfState[] = {0, 0, 0, 0, 0, 0, 9999};
-long _eepromAfStateDefault[] = {5000, 100000, 5000, 2, 0, 0, 0};
+long _eepromAfStateDefault[] = {50000, 100000, 5000, 2, 0, 0, 0};
 int _eepromAfStatePropertyCount = sizeof(_eepromAfState) / sizeof(long);
 int _eepromAfStateAddressSize = sizeof(_eepromAfState);
 int _eepromAfStateAdressesCount = EEPROMSizeATmega328 / _eepromAfStateAddressSize;
@@ -115,6 +115,22 @@ void eepromWrite()
 
   //write to new address
   eepromGetAddress();
+
+  /*Serial.print("Memory address: ");
+  Serial.println(_eepromAfStateCurrentAddress);
+  Serial.print("Position: ");
+  Serial.println(_eepromAfState[EEPROM_AF_STATE_POSITION]);
+  Serial.print("Always on: ");
+  Serial.println(_eepromAfState[EEPROM_AF_STATE_IS_ALWAYS_ON]);
+  Serial.print("Max movement: ");
+  Serial.println(_eepromAfState[EEPROM_AF_STATE_MAX_MOVEMENT]);
+  Serial.print("Max position: ");
+  Serial.println(_eepromAfState[EEPROM_AF_STATE_MAX_POSITION]);
+  Serial.print("Settle buffer ms: ");
+  Serial.println(_eepromAfState[EEPROM_AF_STATE_SETTLE_BUFFER_MS]);
+  Serial.print("Step mode: ");
+  Serial.println(_eepromAfState[EEPROM_AF_STATE_STEP_MODE]);*/
+
   EEPROM.writeBlock<long>(_eepromAfStateCurrentAddress, _eepromAfState, _eepromAfStatePropertyCount);
 }
 
@@ -239,11 +255,11 @@ void executeCommand()
   }
   else if (strcmp("GPOS", _command) == 0)
   {
-    printResponse((int)_eepromAfState[EEPROM_AF_STATE_POSITION]);
+    printResponse(_eepromAfState[EEPROM_AF_STATE_POSITION]);
   }
   else if (strcmp("GTRG", _command) == 0)
   {
-    printResponse((int)_motorTargetPosition);
+    printResponse(_motorTargetPosition);
   }
   else if (strcmp("STRG", _command) == 0)
   {
