@@ -1,5 +1,5 @@
-D:\Projects\DeepSkyDad.AF1\DeepSkyDad.AF1.ASCOM\bin\Release\ASCOM.DeepSkyDad.AF1.Focuser.dll.config
 D:\Projects\DeepSkyDad.AF1\DeepSkyDad.AF1.ASCOM\bin\Release\ASCOM.DeepSkyDad.AF1.Focuser.dll
+D:\Projects\DeepSkyDad.AF1\DeepSkyDad.AF1.ASCOM\bin\Release\ASCOM.DeepSkyDad.AF1.Focuser.dll.config
 D:\Projects\DeepSkyDad.AF1\DeepSkyDad.AF1.ASCOM\bin\Release\ASCOM.DeepSkyDad.AF1.Focuser.pdb
 D:\Projects\DeepSkyDad.AF1\DeepSkyDad.AF1.ASCOM\bin\Release\ASCOM.DeepSkyDad.AF1.Focuser.tlb
 D:\Projects\DeepSkyDad.AF1\DeepSkyDad.AF1.ASCOM\bin\Release\ASCOM.Astrometry.dll

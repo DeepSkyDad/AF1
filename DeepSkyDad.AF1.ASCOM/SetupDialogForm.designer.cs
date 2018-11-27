@@ -41,6 +41,7 @@ namespace ASCOM.DeepSkyDad.AF1
             this.chkAlwaysOn = new System.Windows.Forms.CheckBox();
             this.numericUpDownSettleBuffer = new System.Windows.Forms.NumericUpDown();
             this.label4 = new System.Windows.Forms.Label();
+            this.buttonFirmwareInfo = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.picASCOM)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownSettleBuffer)).BeginInit();
             this.SuspendLayout();
@@ -49,7 +50,7 @@ namespace ASCOM.DeepSkyDad.AF1
             // 
             this.cmdOK.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.cmdOK.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.cmdOK.Location = new System.Drawing.Point(106, 245);
+            this.cmdOK.Location = new System.Drawing.Point(208, 250);
             this.cmdOK.Name = "cmdOK";
             this.cmdOK.Size = new System.Drawing.Size(59, 24);
             this.cmdOK.TabIndex = 0;
@@ -61,7 +62,7 @@ namespace ASCOM.DeepSkyDad.AF1
             // 
             this.cmdCancel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.cmdCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.cmdCancel.Location = new System.Drawing.Point(171, 245);
+            this.cmdCancel.Location = new System.Drawing.Point(275, 249);
             this.cmdCancel.Name = "cmdCancel";
             this.cmdCancel.Size = new System.Drawing.Size(59, 25);
             this.cmdCancel.TabIndex = 1;
@@ -188,11 +189,23 @@ namespace ASCOM.DeepSkyDad.AF1
             this.label4.TabIndex = 17;
             this.label4.Text = "Settle buffer (0ms - 5000ms)";
             // 
+            // buttonFirmwareInfo
+            // 
+            this.buttonFirmwareInfo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.buttonFirmwareInfo.Location = new System.Drawing.Point(12, 249);
+            this.buttonFirmwareInfo.Name = "buttonFirmwareInfo";
+            this.buttonFirmwareInfo.Size = new System.Drawing.Size(97, 24);
+            this.buttonFirmwareInfo.TabIndex = 18;
+            this.buttonFirmwareInfo.Text = "Firmware version";
+            this.buttonFirmwareInfo.UseVisualStyleBackColor = true;
+            this.buttonFirmwareInfo.Click += new System.EventHandler(this.buttonFirmwareInfo_Click);
+            // 
             // SetupDialogForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(344, 306);
+            this.ClientSize = new System.Drawing.Size(344, 286);
+            this.Controls.Add(this.buttonFirmwareInfo);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.numericUpDownSettleBuffer);
             this.Controls.Add(this.chkAlwaysOn);
@@ -235,5 +248,6 @@ namespace ASCOM.DeepSkyDad.AF1
         private System.Windows.Forms.CheckBox chkAlwaysOn;
         private System.Windows.Forms.NumericUpDown numericUpDownSettleBuffer;
         private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.Button buttonFirmwareInfo;
     }
 }

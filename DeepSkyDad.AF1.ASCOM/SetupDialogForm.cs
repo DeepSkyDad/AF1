@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using System.Windows.Forms;
 using ASCOM.Utilities;
 
@@ -100,6 +101,43 @@ namespace ASCOM.DeepSkyDad.AF1
         private void chkTrace_CheckedChanged(object sender, EventArgs e)
         {
 
+        }
+
+        private void buttonFirmwareInfo_Click(object sender, EventArgs e)
+        {
+
+            var comPort = (string)comboBoxComPort.SelectedItem;
+            if (string.IsNullOrWhiteSpace(comPort))
+            {
+                MessageBox.Show("Please select COM port", "Error");
+                return;
+            }
+
+            var f = new Focuser();
+
+            try
+            {
+                Focuser.comPort = comPort;
+                f.Connected = true;
+                var firmwareVersion = f.CommandString("GSFR");
+                ShowNonBlockingMessageBox($"v{firmwareVersion}", "Firmware version");
+            }
+            catch(Exception ex)
+            {
+                MessageBox.Show($"Connection to the focuser failed ({ex.Message})", "Error");
+            }
+            finally
+            {
+                if (f.Connected)
+                    f.Connected = false;
+            }
+         
+        }
+
+        private void ShowNonBlockingMessageBox(string text, string caption)
+        {
+            Thread t = new Thread(() => MessageBox.Show(text, caption));
+            t.Start();
         }
     }
 }

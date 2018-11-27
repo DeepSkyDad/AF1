@@ -27,7 +27,7 @@ namespace ASCOM.DeepSkyDad.AF1
             //    throw new DriverException(string.Format("Please upgrade firmware before using {0} driver (minimum version: {1})", driverID, minimumFirmwareVerson.ToString()));
         }
 
-        private string CommandString(string command)
+        public string CommandString(string command)
         {
             return CommandString(command, false, false);
         }

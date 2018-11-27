@@ -71,8 +71,9 @@ int _serialCommandRawIdx;
 char _command[20];
 char _commandParam[20];
 
-const char programName[] = "DeepSkyDad.AF1";
-const char programVersion[] = "1.0.0";
+const char firmwareName[] = "DeepSkyDad.AF1";
+const char firmwareVersion[] = "1.0.0";
+const char firmwareSubversion[] = "1.0.1";
 
 /* EEPROM functions */
 bool eepromValidateChecksum()
@@ -248,9 +249,15 @@ void executeCommand()
   {
     Serial.print("(");
     Serial.print("Board=");
-    Serial.print(programName);
+    Serial.print(firmwareName);
     Serial.print(", Version=");
-    Serial.print(programVersion);
+    Serial.print(firmwareVersion);
+    Serial.print(")");
+  }
+  else if (strcmp("GSFR", _command) == 0)
+  {
+    Serial.print("(");
+    Serial.print(firmwareSubversion);
     Serial.print(")");
   }
   else if (strcmp("GPOS", _command) == 0)

@@ -164,11 +164,6 @@ namespace ASCOM.DeepSkyDad.AF1
         /// </summary>
         public void SetupDialog()
         {
-            /*
-             * TODO
-             * 1. step mode choice?
-             * 2. reset on next connect (position 5000)?
-             */ 
             // consider only showing the setup dialog if not connected
             // or call a different dialog if connected
             if (IsConnected)
