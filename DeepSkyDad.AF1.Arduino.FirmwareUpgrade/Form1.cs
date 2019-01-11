@@ -106,7 +106,7 @@ namespace DeepSkyDad.AF1.Arduino.FirmwareUpgrade
             using (var cli = new Cli("Avrdude/avrdude.exe"))
             {
                 // Execute
-                var output = await cli.ExecuteAsync($"-CAvrdude/avrdude.conf -v -patmega328p -carduino -P{this.comPortCombo.Text} -b57600 -D -Uflash:w:{this.textBoxFirmwareFile.Text}:i ");
+                var output = await cli.ExecuteAsync($"-CAvrdude/avrdude.conf -v -patmega328p -carduino -P{this.comPortCombo.Text} -b57600 -D -Uflash:w:"{this.textBoxFirmwareFile.Text}":i ");
                 // Extract output
                 var code = output.ExitCode;
                 var stdOut = output.StandardOutput;
