@@ -47,6 +47,8 @@ namespace DeepSkyDad.AF1.Arduino.FirmwareUpgrade
             //_fonts.AddFontFile("TitilliumWeb-Light.ttf");
             //_fonts.AddFontFile("AlegreyaSansSC-Bold.ttf");
 
+            this.Icon = new Icon(Assembly.GetExecutingAssembly().GetManifestResourceStream("DeepSkyDad.AF1.Arduino.FirmwareUpgrade.EmbeddedFiles.favicon.ico"));
+
             this.ControlBox = false;
             this.Text = String.Empty;
             this.FormBorderStyle = FormBorderStyle.None;
@@ -62,6 +64,8 @@ namespace DeepSkyDad.AF1.Arduino.FirmwareUpgrade
             this.btnOutput.ForeColor = Color.Black;
             this.btnUpload.ForeColor = Color.Black;
             this.btnExit.ForeColor = Color.Black;
+
+            this.comPortCombo.DropDown += comPortCombo_DropDown;
 
             UpdateStatusLabel();
             

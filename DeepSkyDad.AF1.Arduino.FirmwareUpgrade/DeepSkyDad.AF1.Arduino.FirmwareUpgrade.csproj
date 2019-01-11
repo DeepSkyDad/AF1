@@ -36,6 +36,10 @@
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>
+    </ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="CliWrap, Version=1.8.1.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>packages\CliWrap.1.8.1\lib\net45\CliWrap.dll</HintPath>
@@ -107,6 +111,7 @@
     <Content Include="Avrdude\libusb0.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <EmbeddedResource Include="EmbeddedFiles\favicon.ico" />
     <Content Include="Netz\defcomp.dll" />
     <Content Include="Netz\license.txt" />
     <Content Include="Netz\net20comp.dll" />

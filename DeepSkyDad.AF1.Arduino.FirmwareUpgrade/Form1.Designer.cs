@@ -49,7 +49,6 @@
             this.comPortCombo.Name = "comPortCombo";
             this.comPortCombo.Size = new System.Drawing.Size(75, 21);
             this.comPortCombo.TabIndex = 0;
-            this.comPortCombo.DropDown += comPortCombo_DropDown;
             // 
             // btnChooseFirmware
             // 
@@ -133,9 +132,9 @@
             this.labelTitle.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.labelTitle.Location = new System.Drawing.Point(117, 7);
             this.labelTitle.Name = "labelTitle";
-            this.labelTitle.Size = new System.Drawing.Size(228, 13);
+            this.labelTitle.Size = new System.Drawing.Size(198, 13);
             this.labelTitle.TabIndex = 9;
-            this.labelTitle.Text = "DSD AF1 Firmware Upgrade 1.0.0";
+            this.labelTitle.Text = "DSD AF1 Firmware Upgrade 1.0.1";
             // 
             // btnExit
             // 
@@ -167,7 +166,6 @@
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "Form1";
-            this.ShowIcon = false;
             this.ResumeLayout(false);
             this.PerformLayout();
 
