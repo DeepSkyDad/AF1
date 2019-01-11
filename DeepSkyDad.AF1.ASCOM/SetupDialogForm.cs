@@ -117,8 +117,10 @@ namespace ASCOM.DeepSkyDad.AF1
 
             try
             {
-                Focuser.comPort = comPort;
-                f.Connected = true;
+                if(!f.Connected) {
+                    Focuser.comPort = comPort;
+                    f.Connected = true;
+                }
                 var firmwareVersion = f.CommandString("GSFR");
                 ShowNonBlockingMessageBox($"v{firmwareVersion}", "Firmware version");
             }
