@@ -5,13 +5,13 @@
 [Setup]
 AppID={{10cc53ba-ec1f-4cca-8e95-62aa97be4f96}
 AppName=ASCOM DSD AF1
-AppVerName=ASCOM DSD AF1 1.0.0
-AppVersion=1.0.0
+AppVerName=ASCOM DSD AF1 1.0.1
+AppVersion=1.0.1
 AppPublisher=Pavle Gartner <pavle.gartner@gmail.com>
 AppPublisherURL=mailto:pavle.gartner@gmail.com
 AppSupportURL=http://tech.groups.yahoo.com/group/ASCOM-Talk/
 AppUpdatesURL=http://ascom-standards.org/
-VersionInfoVersion=1.0.0
+VersionInfoVersion=1.0.1
 MinVersion=0,5.0.2195sp4
 DefaultDirName="{cf}\ASCOM\Focuser"
 DisableDirPage=yes

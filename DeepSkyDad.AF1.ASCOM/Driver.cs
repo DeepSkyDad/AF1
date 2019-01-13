@@ -169,7 +169,7 @@ namespace ASCOM.DeepSkyDad.AF1
             if (IsConnected)
                 System.Windows.Forms.MessageBox.Show("Already connected, just press OK");
 
-            using (SetupDialogForm F = new SetupDialogForm())
+            using (SetupDialogForm F = new SetupDialogForm(this))
             {
                 var result = F.ShowDialog();
                 if (result == System.Windows.Forms.DialogResult.OK)

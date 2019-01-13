@@ -13,8 +13,11 @@ namespace ASCOM.DeepSkyDad.AF1
     [ComVisible(false)]					// Form not registered for COM!
     public partial class SetupDialogForm : Form
     {
-        public SetupDialogForm()
+        private Focuser _f;
+
+        public SetupDialogForm(Focuser f)
         {
+            _f = f;
             InitializeComponent();
             // Initialise current values of user settings from the ASCOM Profile
             InitUI();
@@ -113,15 +116,18 @@ namespace ASCOM.DeepSkyDad.AF1
                 return;
             }
 
-            var f = new Focuser();
+            if (_f.Connected)
+            {
+                var firmwareVersion = _f.CommandString("GSFR");
+                ShowNonBlockingMessageBox($"v{firmwareVersion}", "Firmware version");
+                return;
+            }
 
             try
             {
-                if(!f.Connected) {
-                    Focuser.comPort = comPort;
-                    f.Connected = true;
-                }
-                var firmwareVersion = f.CommandString("GSFR");
+                Focuser.comPort = comPort;
+                _f.Connected = true;
+                var firmwareVersion = _f.CommandString("GSFR");
                 ShowNonBlockingMessageBox($"v{firmwareVersion}", "Firmware version");
             }
             catch(Exception ex)
@@ -130,8 +136,8 @@ namespace ASCOM.DeepSkyDad.AF1
             }
             finally
             {
-                if (f.Connected)
-                    f.Connected = false;
+                if (_f.Connected)
+                    _f.Connected = false;
             }
          
         }
