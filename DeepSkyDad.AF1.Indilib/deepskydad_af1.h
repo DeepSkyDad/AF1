@@ -1,6 +1,6 @@
 /*
     Deep Sky Dad AF1
-    Based on Moonline driver.
+    Based on Moonlite driver.
     Copyright (C) 2013-2019 Jasem Mutlaq (mutlaqja@ikarustech.com)
 
     This library is free software; you can redistribute it and/or
