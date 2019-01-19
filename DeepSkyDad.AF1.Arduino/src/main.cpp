@@ -21,7 +21,9 @@
     The actual set of required commands is based on ASCOM IFocuserV3 interface, for more check:
     https://ascom-standards.org/Help/Platform/html/T_ASCOM_DeviceInterface_IFocuserV3.htm
     
-  
+   TODO
+   -add reverse direction option
+   -add set position option 
 */
 
 #include <Arduino.h>
