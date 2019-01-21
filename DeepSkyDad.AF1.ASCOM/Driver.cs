@@ -72,7 +72,7 @@ namespace ASCOM.DeepSkyDad.AF1
         /// </summary>
         private static string driverDescription = "ASCOM Deep Sky Dad AF1";
 
-        private static string firmwareVersion = "Board=DeepSkyDad.AF1, Version=1.0.0";
+        private static string firmwareVersion = "Board=DeepSkyDad.AF1, Version=1.1.0";
 
         internal static string comPortProfileName = "COM Port"; // Constants used for Profile persistence
         internal static string comPortDefault = "COM10";
@@ -80,22 +80,34 @@ namespace ASCOM.DeepSkyDad.AF1
         internal static string traceStateDefault = "false";
         internal static string stepSizeProfileName = "Step size";
         internal static string stepSizeDefault = "1/2";
-        //internal static string maxPositionProfileName = "Maximum positions";
-        //internal static string maxPositionDefault = "10000";
+        internal static string maxPositionProfileName = "Maximum positions";
+        internal static string maxPositionDefault = "100000";
+        internal static string maxMovementProfileName = "Maximum movement";
+        internal static string maxMovementDefault = "5000";
         internal static string resetOnConnectProfileName = "Reset on connect";
         internal static string resetOnConnectDefault = "false";
+        internal static string setPositonOnConnectProfileName = "Set position on connect";
+        internal static string setPositonOnConnectDefault = "false";
+        internal static string setPositonOnConnectValueProfileName = "Set position on connect value";
+        internal static string setPositonOnConnectValueDefault = "50000";
         internal static string alwaysOnProfileName = "Always on";
         internal static string alwaysOnDefault = "true";
         internal static string settleBufferProfileName = "Settle buffer";
         internal static string settleBufferDefault = "0";
+        internal static string reverseDirectionProfileName = "Reverse direction";
+        internal static string reverseDirectionDefault = "false";
 
         internal static string comPort; // Variables to hold the currrent device configuration
-        //internal static int maxPosition;
+        internal static int maxPosition;
+        internal static int maxMovement;
         internal static string stepSize;
         internal static bool traceState;
         internal static bool resetOnConnect;
+        internal static bool setPositonOnConnect;
+        internal static int setPositionOnConnectValue;
         internal static bool alwaysOn;
         internal static int settleBuffer;
+        internal static bool reverseDirection;
         internal static int commandTimeout = 2000;
 
         internal static int? maxIncrement = null;
@@ -171,6 +183,9 @@ namespace ASCOM.DeepSkyDad.AF1
 
             using (SetupDialogForm F = new SetupDialogForm(this))
             {
+                System.Reflection.Assembly assembly = System.Reflection.Assembly.GetExecutingAssembly();
+                FileVersionInfo fvi = FileVersionInfo.GetVersionInfo(assembly.Location);
+                F.Text = $"{driverDescription}, v{fvi.FileVersion.Substring(0, fvi.FileVersion.LastIndexOf('.'))}"; 
                 var result = F.ShowDialog();
                 if (result == System.Windows.Forms.DialogResult.OK)
                 {
@@ -274,15 +289,28 @@ namespace ASCOM.DeepSkyDad.AF1
                         CommandString("RSET");
                     }
 
+                    if(setPositonOnConnect)
+                    {
+                        //deselect the flag
+                        using (Profile driverProfile = new Profile())
+                        {
+                            setPositonOnConnect = false;
+                            driverProfile.DeviceType = "Focuser";
+                            driverProfile.WriteValue(driverID, setPositonOnConnectProfileName, setPositonOnConnect.ToString());
+                        }
+
+                        CommandString($"SPOS{setPositionOnConnectValue}");
+                        setPositionOnConnectValue = maxPosition / 2;
+                    }
+
                     focuserPosition = (int)CommandLong("GPOS");
-                    CommandString($"SAON{(alwaysOn ? 1 : 0)}");
-                    CommandString($"SBUF{settleBuffer}");
 
                     var ss = 2;
-                    if(stepSize == "1")
+                    if (stepSize == "1")
                     {
                         ss = 1;
-                    } else if(stepSize == "1/2")
+                    }
+                    else if (stepSize == "1/2")
                     {
                         ss = 2;
                     }
@@ -295,14 +323,17 @@ namespace ASCOM.DeepSkyDad.AF1
                         ss = 8;
                     }
 
-                    CommandString($"SSTP{ss}");
-                    CommandString($"WEPR");
-                    Thread.Sleep(100);
+                    CommandString($"CONF{ss}|{(alwaysOn ? 1 : 0)}|{(reverseDirection ? 1 : 0)}|{maxPosition}|{maxMovement}|{settleBuffer}");
+                    //CommandString($"SAON{(alwaysOn ? 1 : 0)}");
+                    //CommandString($"SREV{(reverseDirection ? 1 : 0)}");
+                    //CommandString($"SMXP{maxPosition}");
+                    //CommandString($"SMXM{maxMovement}");
+                    //CommandString($"SBUF{settleBuffer}");
+                    //CommandString($"SSTP{ss}");
                 }
                 else
                 {
                     CommandString($"SAON0");
-                    CommandString($"WEPR");
                     Thread.Sleep(100);
 
                     connectedState = false;
@@ -612,10 +643,14 @@ namespace ASCOM.DeepSkyDad.AF1
                 driverProfile.DeviceType = "Focuser";
                 traceState = Convert.ToBoolean(driverProfile.GetValue(driverID, traceStateProfileName, string.Empty, traceStateDefault));
                 comPort = driverProfile.GetValue(driverID, comPortProfileName, string.Empty, comPortDefault);
-                //maxPosition = Convert.ToInt32(driverProfile.GetValue(driverID, maxPositionProfileName, string.Empty, maxPositionDefault));
+                maxPosition = Convert.ToInt32(driverProfile.GetValue(driverID, maxPositionProfileName, string.Empty, maxPositionDefault));
+                maxMovement = Convert.ToInt32(driverProfile.GetValue(driverID, maxMovementProfileName, string.Empty, maxMovementDefault));
                 stepSize = driverProfile.GetValue(driverID, stepSizeProfileName, string.Empty, stepSizeDefault);
                 resetOnConnect = Convert.ToBoolean(driverProfile.GetValue(driverID, resetOnConnectProfileName, string.Empty, resetOnConnectDefault));
+                setPositonOnConnect = Convert.ToBoolean(driverProfile.GetValue(driverID, setPositonOnConnectProfileName, string.Empty, setPositonOnConnectDefault));
+                setPositionOnConnectValue = Convert.ToInt32(driverProfile.GetValue(driverID, setPositonOnConnectValueProfileName, string.Empty, setPositonOnConnectValueDefault)); ;
                 alwaysOn = Convert.ToBoolean(driverProfile.GetValue(driverID, alwaysOnProfileName, string.Empty, alwaysOnDefault));
+                reverseDirection = Convert.ToBoolean(driverProfile.GetValue(driverID, reverseDirectionProfileName, string.Empty, reverseDirectionDefault));
                 settleBuffer = Convert.ToInt32(driverProfile.GetValue(driverID, settleBufferProfileName, string.Empty, settleBufferDefault));
             }
         }
@@ -631,10 +666,14 @@ namespace ASCOM.DeepSkyDad.AF1
                 driverProfile.WriteValue(driverID, traceStateProfileName, traceState.ToString());
                 driverProfile.WriteValue(driverID, comPortProfileName, comPort.ToString());
                 driverProfile.WriteValue(driverID, stepSizeProfileName, stepSize);
-                //driverProfile.WriteValue(driverID, maxPositionProfileName, maxPosition.ToString());
+                driverProfile.WriteValue(driverID, maxPositionProfileName, maxPosition.ToString());
+                driverProfile.WriteValue(driverID, maxMovementProfileName, maxMovement.ToString());
                 driverProfile.WriteValue(driverID, resetOnConnectProfileName, resetOnConnect.ToString());
+                driverProfile.WriteValue(driverID, setPositonOnConnectProfileName, setPositonOnConnect.ToString());
+                driverProfile.WriteValue(driverID, setPositonOnConnectValueProfileName, setPositionOnConnectValue.ToString());
                 driverProfile.WriteValue(driverID, alwaysOnProfileName, alwaysOn.ToString());
                 driverProfile.WriteValue(driverID, settleBufferProfileName, settleBuffer.ToString());
+                driverProfile.WriteValue(driverID, reverseDirectionProfileName, reverseDirection.ToString());
             }
         }
 

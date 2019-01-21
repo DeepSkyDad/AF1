@@ -28,11 +28,16 @@ namespace ASCOM.DeepSkyDad.AF1
             // Place any validation constraint checks here
             // Update the state variables with results from the dialogue
             Focuser.comPort = (string)comboBoxComPort.SelectedItem;
-            //Focuser.maxPosition = (int)numericUpMaxPosition.Value;
+            Focuser.maxPosition = (int)numericUpMaxPosition.Value;
+            Focuser.maxMovement = (int)numericUpMaxMovement.Value;
             Focuser.stepSize = (string)comboBoxStepSize.SelectedItem;
             Focuser.traceState = chkTrace.Checked;
-            Focuser.resetOnConnect = chkResetOnConnet.Checked;
+            Focuser.resetOnConnect = chkResetOnConnect.Checked;
+            Focuser.setPositonOnConnect = chkSetPositionOnConnect.Checked;
+            if(Focuser.setPositonOnConnect)
+                Focuser.setPositionOnConnectValue = (int)numericSetPositionOnConnectValue.Value;
             Focuser.alwaysOn = chkAlwaysOn.Checked;
+            Focuser.reverseDirection = chkReverseDirection.Checked;
             Focuser.settleBuffer = (int)numericUpDownSettleBuffer.Value;
         }
 
@@ -61,10 +66,15 @@ namespace ASCOM.DeepSkyDad.AF1
         private void InitUI()
         {
             chkTrace.Checked = Focuser.traceState;
-            //numericUpMaxPosition.Value = Focuser.maxPosition;
+            numericUpMaxPosition.Value = Focuser.maxPosition;
+            numericUpMaxMovement.Value = Focuser.maxMovement;
             comboBoxStepSize.Text = Focuser.stepSize;
-            chkResetOnConnet.Checked = Focuser.resetOnConnect;
+            chkResetOnConnect.Checked = Focuser.resetOnConnect;
+            chkSetPositionOnConnect.Checked = Focuser.setPositonOnConnect;
+            numericSetPositionOnConnectValue.Value = Focuser.setPositionOnConnectValue;
+            numericSetPositionOnConnectValue.Visible = Focuser.setPositonOnConnect;
             chkAlwaysOn.Checked = Focuser.alwaysOn;
+            chkReverseDirection.Checked = Focuser.reverseDirection;
             numericUpDownSettleBuffer.Value = Focuser.settleBuffer;
             // set the list of com ports to those that are currently available
             comboBoxComPort.Items.Clear();
@@ -146,6 +156,16 @@ namespace ASCOM.DeepSkyDad.AF1
         {
             Thread t = new Thread(() => MessageBox.Show(text, caption));
             t.Start();
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void chkSetPositionOnConnect_CheckedChanged(object sender, EventArgs e)
+        {
+            numericSetPositionOnConnectValue.Visible = chkSetPositionOnConnect.Checked;
         }
     }
 }

@@ -16,14 +16,10 @@
     Each response starts with ( and ends with )
     If command results in error, response starts with ! and ends with ), containing error code. List of error codes:
       100 - command not found
-      101 - invalid target position
-      102 - invalid step mode
+      101 - relative movement bigger from max. movement
+      102 - target position below zero or larger from maximum position
     The actual set of required commands is based on ASCOM IFocuserV3 interface, for more check:
     https://ascom-standards.org/Help/Platform/html/T_ASCOM_DeviceInterface_IFocuserV3.htm
-    
-   TODO
-   -add reverse direction option
-   -add set position option 
 */
 
 #include <Arduino.h>
@@ -35,11 +31,13 @@
 #define EEPROM_AF_STATE_STEP_MODE 3
 #define EEPROM_AF_STATE_IS_ALWAYS_ON 4
 #define EEPROM_AF_STATE_SETTLE_BUFFER_MS 5
-#define EEPROM_AF_STATE_CHECKSUM 6
+#define EEPROM_AF_STATE_REVERSE_DIRECTION 6
+#define EEPROM_AF_STATE_CHECKSUM 7
 
-//{<position>, <maxPosition>, <maxMovement>, <stepMode>, <isAlwaysOn>, <settleBufferMs>, <checksum>}
-long _eepromAfState[] = {0, 0, 0, 0, 0, 0, 9999};
-long _eepromAfStateDefault[] = {50000, 100000, 5000, 2, 0, 0, 0};
+//{<position>, <maxPosition>, <maxMovement>, <stepMode>, <isAlwaysOn>, <settleBufferMs>, <reverseDirection>, <checksum>}
+long _eepromAfState[] = {0, 0, 0, 0, 0, 0, 0, 9999};
+long _eepromAfPrevState[] = {0, 0, 0, 0, 0, 0, 0, 9999};
+long _eepromAfStateDefault[] = {50000, 100000, 5000, 2, 0, 0, 0, 0};
 int _eepromAfStatePropertyCount = sizeof(_eepromAfState) / sizeof(long);
 int _eepromAfStateAddressSize = sizeof(_eepromAfState);
 int _eepromAfStateAdressesCount = EEPROMSizeATmega328 / _eepromAfStateAddressSize;
@@ -68,14 +66,14 @@ long _motorTargetPosition;
 long _motorSettleBufferPrevMs;
 
 /* Serial communication */
-char _serialCommandRaw[20];
+char _serialCommandRaw[40];
 int _serialCommandRawIdx;
-char _command[20];
-char _commandParam[20];
+char _command[5];
+char _commandParam[35];
 
 const char firmwareName[] = "DeepSkyDad.AF1";
-const char firmwareVersion[] = "1.0.0";
-const char firmwareSubversion[] = "1.0.1";
+const char firmwareVersion[] = "1.1.0";
+const char firmwareSubversion[] = "1.1.0";
 
 /* EEPROM functions */
 bool eepromValidateChecksum()
@@ -99,8 +97,26 @@ void eepromGetAddress()
   }
 }
 
-void eepromWrite()
+void eepromWrite(bool forceWrite)
 {
+  _eepromSaveAfState = false;
+
+  //prevent unneccessary saves
+  if(!forceWrite) {
+     bool stateChanged = false;
+    for (int i = 0; i < _eepromAfStatePropertyCount - 1; i++)
+    {
+      if(_eepromAfState[i] != _eepromAfPrevState[i]) {
+        stateChanged = true;
+        break;
+      }
+    }
+
+    if(!stateChanged) {
+      return;
+    }
+  }
+
   //invalidate previous state
   if (eepromValidateChecksum())
   {
@@ -112,27 +128,14 @@ void eepromWrite()
   long checksum = 0;
   for (int i = 0; i < _eepromAfStatePropertyCount - 1; i++)
   {
+    _eepromAfPrevState[i] = _eepromAfState[i];
     checksum += _eepromAfState[i];
   }
   _eepromAfState[EEPROM_AF_STATE_CHECKSUM] = checksum;
+  _eepromAfPrevState[EEPROM_AF_STATE_CHECKSUM] = checksum;
 
   //write to new address
   eepromGetAddress();
-
-  /*Serial.print("Memory address: ");
-  Serial.println(_eepromAfStateCurrentAddress);
-  Serial.print("Position: ");
-  Serial.println(_eepromAfState[EEPROM_AF_STATE_POSITION]);
-  Serial.print("Always on: ");
-  Serial.println(_eepromAfState[EEPROM_AF_STATE_IS_ALWAYS_ON]);
-  Serial.print("Max movement: ");
-  Serial.println(_eepromAfState[EEPROM_AF_STATE_MAX_MOVEMENT]);
-  Serial.print("Max position: ");
-  Serial.println(_eepromAfState[EEPROM_AF_STATE_MAX_POSITION]);
-  Serial.print("Settle buffer ms: ");
-  Serial.println(_eepromAfState[EEPROM_AF_STATE_SETTLE_BUFFER_MS]);
-  Serial.print("Step mode: ");
-  Serial.println(_eepromAfState[EEPROM_AF_STATE_STEP_MODE]);*/
 
   EEPROM.writeBlock<long>(_eepromAfStateCurrentAddress, _eepromAfState, _eepromAfStatePropertyCount);
 }
@@ -142,74 +145,17 @@ void eepromResetState()
   for (int i = 0; i < _eepromAfStatePropertyCount; i++)
   {
     _eepromAfState[i] = _eepromAfStateDefault[i];
+    _eepromAfPrevState[i] = _eepromAfStateDefault[i];
   }
-  eepromWrite();
+  eepromWrite(true);
 }
 
 bool eepromRead()
 {
   eepromGetAddress();
   EEPROM.readBlock<long>(_eepromAfStateCurrentAddress, _eepromAfState, _eepromAfStatePropertyCount);
+  EEPROM.readBlock<long>(_eepromAfStateCurrentAddress, _eepromAfPrevState, _eepromAfStatePropertyCount);
   return eepromValidateChecksum();
-}
-
-void setAlwaysOn()
-{
-  if (_eepromAfState[EEPROM_AF_STATE_IS_ALWAYS_ON] == 1)
-  {
-    digitalWrite(MP6500_PIN_SLP, HIGH);
-    analogWrite(MP6500_PIN_I1, MP6500_PIN_I1_ALWAYS_ON);
-  }
-  else
-  {
-    digitalWrite(MP6500_PIN_SLP, LOW);
-  }
-}
-
-void stopMotor()
-{
-  setAlwaysOn();
-
-  _motorTargetPosition = _eepromAfState[EEPROM_AF_STATE_POSITION];
-  _eepromSaveAfState = true;
-
-  if (_motorIsMoving && _eepromAfState[EEPROM_AF_STATE_SETTLE_BUFFER_MS] > 0)
-    _motorSettleBufferPrevMs = millis();
-
-  _motorIsMoving = false;
-}
-
-void changeStepMode(int stepMode)
-{
-  if (stepMode == 1)
-  {
-    digitalWrite(MP6500_PIN_MS1, 0);
-    digitalWrite(MP6500_PIN_MS2, 0);
-  }
-  else if (stepMode == 2)
-  {
-    digitalWrite(MP6500_PIN_MS1, 1);
-    digitalWrite(MP6500_PIN_MS2, 0);
-  }
-  else if (stepMode == 4)
-  {
-    digitalWrite(MP6500_PIN_MS1, 0);
-    digitalWrite(MP6500_PIN_MS2, 1);
-  }
-  else if (stepMode == 8)
-  {
-    digitalWrite(MP6500_PIN_MS1, 1);
-    digitalWrite(MP6500_PIN_MS2, 1);
-  }
-  else
-  {
-    digitalWrite(MP6500_PIN_MS1, 1);
-    digitalWrite(MP6500_PIN_MS2, 0);
-    stepMode = 2;
-  }
-
-  _eepromAfState[EEPROM_AF_STATE_STEP_MODE] = stepMode;
-  _eepromSaveAfState = true;
 }
 
 void printResponse(int response)
@@ -245,6 +191,155 @@ void printResponseErrorCode(int code)
   Serial.print(")");
 }
 
+void writeAlwaysOn()
+{
+  if (_eepromAfState[EEPROM_AF_STATE_IS_ALWAYS_ON] == 1)
+  {
+    digitalWrite(MP6500_PIN_SLP, HIGH);
+    analogWrite(MP6500_PIN_I1, MP6500_PIN_I1_ALWAYS_ON);
+  }
+  else
+  {
+    digitalWrite(MP6500_PIN_SLP, LOW);
+  }
+}
+
+int setAlwaysOn(char param[]) {
+  long isAlwaysOn = strtol(param, NULL, 10);
+  if(isAlwaysOn != 0 && isAlwaysOn != 1)
+    isAlwaysOn = 0;
+
+  if(_eepromAfState[EEPROM_AF_STATE_IS_ALWAYS_ON] == isAlwaysOn) {
+    writeAlwaysOn();
+    return 0;
+  }
+
+  _eepromAfState[EEPROM_AF_STATE_IS_ALWAYS_ON] = isAlwaysOn;
+  writeAlwaysOn();
+  return 1;
+}
+
+void stopMotor()
+{
+  writeAlwaysOn();
+
+  _motorTargetPosition = _eepromAfState[EEPROM_AF_STATE_POSITION];
+  _eepromSaveAfState = true;
+
+  if (_motorIsMoving && _eepromAfState[EEPROM_AF_STATE_SETTLE_BUFFER_MS] > 0)
+    _motorSettleBufferPrevMs = millis();
+
+  _motorIsMoving = false;
+}
+
+void writeStepMode(int stepMode)
+{
+  if (stepMode == 1)
+  {
+    digitalWrite(MP6500_PIN_MS1, 0);
+    digitalWrite(MP6500_PIN_MS2, 0);
+  }
+  else if (stepMode == 2)
+  {
+    digitalWrite(MP6500_PIN_MS1, 1);
+    digitalWrite(MP6500_PIN_MS2, 0);
+  }
+  else if (stepMode == 4)
+  {
+    digitalWrite(MP6500_PIN_MS1, 0);
+    digitalWrite(MP6500_PIN_MS2, 1);
+  }
+  else if (stepMode == 8)
+  {
+    digitalWrite(MP6500_PIN_MS1, 1);
+    digitalWrite(MP6500_PIN_MS2, 1);
+  }
+  else
+  {
+    digitalWrite(MP6500_PIN_MS1, 1);
+    digitalWrite(MP6500_PIN_MS2, 0);
+    stepMode = 2;
+  }
+
+  _eepromAfState[EEPROM_AF_STATE_STEP_MODE] = stepMode;
+}
+
+int setStepMode(char param[]) {
+  long sm = strtol(param, NULL, 10);
+  if (sm != 1 && sm != 2 && sm != 4 && sm != 8 && sm != 16)
+  {
+    return 0;
+  }
+  else
+  {
+    if(_eepromAfState[EEPROM_AF_STATE_STEP_MODE] == sm) {
+      return 0;
+    }
+
+    writeStepMode(sm);
+    return 1;
+  }
+}
+
+int setReverseDir(char param[]) {
+  long isRevDir = strtol(param, NULL, 10);
+  if(isRevDir != 0 && isRevDir != 1)
+    isRevDir = 0;
+
+  if(_eepromAfState[EEPROM_AF_STATE_REVERSE_DIRECTION] == isRevDir) {
+    return 0;
+  }
+
+  _eepromAfState[EEPROM_AF_STATE_REVERSE_DIRECTION] = isRevDir;
+  return 1;
+}
+
+int setMaxPos(char param[]) {
+  long maxPos = strtol(param, NULL, 10);
+  if(maxPos < 10000)
+    maxPos = 10000;
+
+  if(_eepromAfState[EEPROM_AF_STATE_MAX_POSITION] == maxPos) {
+    return 0;
+  }
+
+  if(_motorTargetPosition > maxPos)
+    _motorTargetPosition = maxPos;
+
+  if(_eepromAfState[EEPROM_AF_STATE_POSITION] > maxPos)
+    _eepromAfState[EEPROM_AF_STATE_POSITION] = maxPos;
+
+  _eepromAfState[EEPROM_AF_STATE_MAX_POSITION] = maxPos;
+  return 1;
+}
+
+int setMaxMovement(char param[]) {
+  long maxMov = strtol(_commandParam, NULL, 10);
+  if(maxMov < 1000)
+    maxMov = 1000;
+
+  if(_eepromAfState[EEPROM_AF_STATE_MAX_MOVEMENT] == maxMov) {
+    return 0;
+  }
+
+  _eepromAfState[EEPROM_AF_STATE_MAX_MOVEMENT] = maxMov;
+  return 1;
+}
+
+int setSettleBuffer(char param[]) {
+   long settleBufferMs = strtol(_commandParam, NULL, 10);
+  if(settleBufferMs < 0) {
+    settleBufferMs = 0;
+  }
+
+  if(_eepromAfState[EEPROM_AF_STATE_SETTLE_BUFFER_MS] == settleBufferMs) {
+    return 0;
+  }
+
+  _eepromAfState[EEPROM_AF_STATE_SETTLE_BUFFER_MS] = settleBufferMs;
+  return 1;
+}
+
 void executeCommand()
 {
   if (strcmp("GFRM", _command) == 0)
@@ -273,14 +368,21 @@ void executeCommand()
   else if (strcmp("STRG", _command) == 0)
   {
     long pos = strtol(_commandParam, NULL, 10);
-    if (abs(_eepromAfState[EEPROM_AF_STATE_POSITION] - pos) > _eepromAfState[EEPROM_AF_STATE_MAX_MOVEMENT] || pos < 0)
+    if (abs(_eepromAfState[EEPROM_AF_STATE_POSITION] - pos) > _eepromAfState[EEPROM_AF_STATE_MAX_MOVEMENT])
     {
       printResponseErrorCode(101);
     }
+    else if(pos < 0 || pos > _eepromAfState[EEPROM_AF_STATE_MAX_POSITION]) {
+      printResponseErrorCode(102);
+    }
     else
     {
+      if(_motorTargetPosition == pos) {
+        printSuccess();
+        return;
+      }
+
       _motorTargetPosition = pos;
-      _eepromSaveAfState = true;
       printSuccess();
     }
   }
@@ -329,9 +431,19 @@ void executeCommand()
   {
     printResponse((long)_eepromAfState[EEPROM_AF_STATE_MAX_POSITION]);
   }
+  else if (strcmp("SMXP", _command) == 0) {
+    setMaxPos(_commandParam);
+    _eepromSaveAfState = true;
+    printSuccess();
+  }
   else if (strcmp("GMXS", _command) == 0)
   {
     printResponse((long)_eepromAfState[EEPROM_AF_STATE_MAX_MOVEMENT]);
+  }
+  else if (strcmp("SMXM", _command) == 0) {
+    setMaxMovement(_commandParam);
+    _eepromSaveAfState = true;
+    printSuccess();
   }
   else if (strcmp("GSTP", _command) == 0)
   {
@@ -339,17 +451,9 @@ void executeCommand()
   }
   else if (strcmp("SSTP", _command) == 0)
   {
-    long sm = strtol(_commandParam, NULL, 10);
-    if (sm != 1 && sm != 2 && sm != 4 && sm != 8 && sm != 16)
-    {
-      printResponseErrorCode(102);
-    }
-    else
-    {
-      changeStepMode(sm);
-      _eepromSaveAfState = true;
-      printSuccess();
-    }
+    setStepMode(_commandParam);
+    _eepromSaveAfState = true;
+    printSuccess();
   }
   else if (strcmp("RSET", _command) == 0)
   {
@@ -362,9 +466,8 @@ void executeCommand()
   }
   else if (strcmp("SAON", _command) == 0)
   {
-    _eepromAfState[EEPROM_AF_STATE_IS_ALWAYS_ON] = strtol(_commandParam, NULL, 10);
+    setAlwaysOn(_commandParam);
     _eepromSaveAfState = true;
-    setAlwaysOn();
     printSuccess();
   }
   else if (strcmp("GBUF", _command) == 0)
@@ -373,7 +476,7 @@ void executeCommand()
   }
   else if (strcmp("SBUF", _command) == 0)
   {
-    _eepromAfState[EEPROM_AF_STATE_SETTLE_BUFFER_MS] = strtol(_commandParam, NULL, 10);
+    setSettleBuffer(_commandParam);
     _eepromSaveAfState = true;
     printSuccess();
   }
@@ -381,6 +484,85 @@ void executeCommand()
   {
     _eepromSaveAfState = true;
     printSuccess();
+  }
+  else if (strcmp("SREV", _command) == 0)
+  {
+    setReverseDir(_commandParam);
+    _eepromSaveAfState = true; 
+    printSuccess();
+  }
+  else if (strcmp("SPOS", _command) == 0) {
+    long newPosition = strtol(_commandParam, NULL, 10);
+    if(newPosition < 0)
+      newPosition = 0;
+    else if(newPosition > _eepromAfState[EEPROM_AF_STATE_MAX_POSITION]) {
+      newPosition = _eepromAfState[EEPROM_AF_STATE_MAX_POSITION];
+    }
+
+    if(_eepromAfState[EEPROM_AF_STATE_POSITION] == newPosition) {
+      printSuccess();
+      return;
+    }
+
+    _eepromAfState[EEPROM_AF_STATE_POSITION] = newPosition;
+    _motorTargetPosition = newPosition;
+    _eepromSaveAfState = true;
+    printSuccess();
+  }
+  else if (strcmp("CONF", _command) == 0) {
+    //COMMAND FORMAT: "CONF{stepMode}|{alwaysOn}|{reverseDirection}|{maxPosition}|{maxMovement}|{settleBuffer}";
+    char* param = strtok(_commandParam, "|");
+    int idx = 0;
+    while (param != 0)
+    {
+        switch(idx) {
+          case 0:
+            setStepMode(param);
+            break;
+          case 1:
+            setAlwaysOn(param);
+            break;
+          case 2:
+            setReverseDir(param);
+            break;
+          case 3:
+            setMaxPos(param);
+            break;
+          case 4:
+            setMaxMovement(param);
+            break;
+          case 5:
+            setSettleBuffer(param);
+            break;
+          default:
+            break;
+        }
+
+        idx++;
+        param = strtok(0, "|");
+    }
+
+    _eepromSaveAfState = true;
+    printSuccess();
+  }
+  else if (strcmp("DEBG", _command) == 0)
+  {
+    Serial.print("Memory address: ");
+    Serial.println(_eepromAfStateCurrentAddress);
+    Serial.print("Position: ");
+    Serial.println(_eepromAfState[EEPROM_AF_STATE_POSITION]);
+    Serial.print("Always on: ");
+    Serial.println(_eepromAfState[EEPROM_AF_STATE_IS_ALWAYS_ON]);
+    Serial.print("Max movement: ");
+    Serial.println(_eepromAfState[EEPROM_AF_STATE_MAX_MOVEMENT]);
+    Serial.print("Max position: ");
+    Serial.println(_eepromAfState[EEPROM_AF_STATE_MAX_POSITION]);
+    Serial.print("Settle buffer ms: ");
+    Serial.println(_eepromAfState[EEPROM_AF_STATE_SETTLE_BUFFER_MS]);
+    Serial.print("Step mode: ");
+    Serial.println(_eepromAfState[EEPROM_AF_STATE_STEP_MODE]);
+    Serial.print("Reverse direction: ");
+    Serial.println(_eepromAfState[EEPROM_AF_STATE_REVERSE_DIRECTION]);
   }
   else
   {
@@ -424,9 +606,8 @@ void setup()
   digitalWrite(MP6500_PIN_STEP, 0);
   digitalWrite(MP6500_PIN_ENABLE, LOW);
   analogWrite(MP6500_PIN_I1, 255);
-  changeStepMode(_eepromAfState[EEPROM_AF_STATE_STEP_MODE]);
-
-  setAlwaysOn();
+  writeStepMode(_eepromAfState[EEPROM_AF_STATE_STEP_MODE]);
+  writeAlwaysOn();
 
   _motorTargetPosition = _eepromAfState[EEPROM_AF_STATE_POSITION];
   _motorSettleBufferPrevMs = 0L;
@@ -443,7 +624,7 @@ void loop()
 
     if (_motorTargetPosition < _eepromAfState[EEPROM_AF_STATE_POSITION])
     {
-      digitalWrite(MP6500_PIN_DIR, LOW);
+      digitalWrite(MP6500_PIN_DIR, _eepromAfState[EEPROM_AF_STATE_REVERSE_DIRECTION] == 0 ? LOW : HIGH);
       digitalWrite(MP6500_PIN_STEP, 1);
       delayMicroseconds(1);
       digitalWrite(MP6500_PIN_STEP, 0);
@@ -452,7 +633,7 @@ void loop()
     }
     else if (_motorTargetPosition > _eepromAfState[EEPROM_AF_STATE_POSITION])
     {
-      digitalWrite(MP6500_PIN_DIR, HIGH);
+      digitalWrite(MP6500_PIN_DIR, _eepromAfState[EEPROM_AF_STATE_REVERSE_DIRECTION] == 0 ? HIGH : LOW);
       digitalWrite(MP6500_PIN_STEP, 1);
       delayMicroseconds(1);
       digitalWrite(MP6500_PIN_STEP, 0);
@@ -468,8 +649,7 @@ void loop()
   {
     if (_eepromSaveAfState)
     {
-      eepromWrite();
-      _eepromSaveAfState = false;
+      eepromWrite(false);
     }
   }
 }
@@ -483,14 +663,14 @@ void serialEvent()
     if (c == '[')
     {
       _serialCommandRawIdx = 0;
-      memset(_serialCommandRaw, 0, 20);
+      memset(_serialCommandRaw, 0, 40);
     }
     else if (c == ']')
     {
      
       int len = strlen(_serialCommandRaw);
-      memset(_command, 0, 20);
-      memset(_commandParam, 0, 20);
+      memset(_command, 0, 5);
+      memset(_commandParam, 0, 35);
       
       if (len >= 4)
       {
