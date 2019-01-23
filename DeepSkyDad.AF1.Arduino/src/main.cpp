@@ -54,7 +54,7 @@ bool _eepromSaveAfState;
 #define MP6500_PIN_I1_ALWAYS_ON 170
 #define MP6500_PIN_I1_MOVING 155
 // MS1/MS2 sets stepping mode 00 = F, 10 = 1/2, 01 = 1/4, 11 = 1/8
-// steps per revolution = 200, 400, 800, 1600
+// consider using only full step, since microstepping requires mandatory always on flag?
 
 #define MP6500_PIN_MS2 7
 #define MP6500_PIN_MS1 8
