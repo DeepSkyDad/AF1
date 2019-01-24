@@ -1,6 +1,6 @@
 # Deep Sky Dad AF1
 
-ASCOM supported budget autofocuser, designed in November 2018.
+[ASCOM supported budget autofocuser](https://deepskydad.com/autofocuser), designed in November 2018.
 
 Based on Arduino Nano and MP6500 stepper driver.
 
