@@ -37,7 +37,7 @@
 //{<position>, <maxPosition>, <maxMovement>, <stepMode>, <isAlwaysOn>, <settleBufferMs>, <reverseDirection>, <checksum>}
 long _eepromAfState[] = {0, 0, 0, 0, 0, 0, 0, 9999};
 long _eepromAfPrevState[] = {0, 0, 0, 0, 0, 0, 0, 9999};
-long _eepromAfStateDefault[] = {50000, 100000, 5000, 2, 0, 0, 0, 0};
+long _eepromAfStateDefault[] = {50000, 100000, 5000, 1, 1, 0, 0, 0};
 int _eepromAfStatePropertyCount = sizeof(_eepromAfState) / sizeof(long);
 int _eepromAfStateAddressSize = sizeof(_eepromAfState);
 int _eepromAfStateAdressesCount = EEPROMSizeATmega328 / _eepromAfStateAddressSize;
