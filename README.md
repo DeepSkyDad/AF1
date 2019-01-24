@@ -1,3 +1,7 @@
 # Deep Sky Dad AF1
 
-Based on Arduino Nano and MP6500 stepper driver. Details coming soon.
+ASCOM supported budget autofocuser, designed in November 2018.
+
+Based on Arduino Nano and MP6500 stepper driver.
+
+Stay tuned for custom designed PCB, housing STL, indilib and more!
