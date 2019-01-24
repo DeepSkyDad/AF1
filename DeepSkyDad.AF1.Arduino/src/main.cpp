@@ -6,7 +6,7 @@
     Each index contains different property, with last one containing checksum (sum of all previous values, so we can validate its contents).
     Additionally, values are saved to a different address every time. Writing to same address every time would wear EEPROM out faster.
     Autofocuseer state:
-    {<position>, <maxPosition>, <maxMovement>, <stepMode>, <isAlwaysOn>, <settleBufferMs>, <checksum>}
+    {<position>, <maxPosition>, <maxMovement>, <stepMode>, <isAlwaysOn>, <settleBufferMs>, <reverseDirection>, <checksum>}
 
   COMMAND SET
     Commands are executed via serial COM port communication. 
