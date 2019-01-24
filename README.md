@@ -4,7 +4,7 @@
 
 Based on Arduino Nano and MP6500 stepper driver.
 
-Stay tuned for custom designed PCB, housing STL, indilib and more!
+Stay tuned for custom designed PCB, housing STL, INDI support and more!
 
 You can check out the firmware code [here](https://github.com/DeepSkyDad/AF1/blob/master/DeepSkyDad.AF1.Arduino/src/main.cpp).
 
