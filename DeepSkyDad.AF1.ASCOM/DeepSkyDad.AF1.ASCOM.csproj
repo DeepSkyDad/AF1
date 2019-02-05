@@ -132,7 +132,6 @@
   <ItemGroup>
     <Content Include="inventory.txt" />
     <Content Include="readme.jpg" />
-    <Content Include="TODO.txt" />
     <None Include="app.config" />
     <None Include="ASCOM.png" />
     <None Include="ASCOMDriverTemplate.snk" />

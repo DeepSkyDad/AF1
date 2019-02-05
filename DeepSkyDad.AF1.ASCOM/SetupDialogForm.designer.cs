@@ -50,6 +50,12 @@ namespace ASCOM.DeepSkyDad.AF1
             this.label11 = new System.Windows.Forms.Label();
             this.chkSetPositionOnConnect = new System.Windows.Forms.CheckBox();
             this.numericSetPositionOnConnectValue = new System.Windows.Forms.NumericUpDown();
+            this.alwaysOnLabel = new System.Windows.Forms.Label();
+            this.buttonReboot = new System.Windows.Forms.Button();
+            this.label7 = new System.Windows.Forms.Label();
+            this.currentMoveComboBox = new System.Windows.Forms.ComboBox();
+            this.label8 = new System.Windows.Forms.Label();
+            this.currentAoComboBox = new System.Windows.Forms.ComboBox();
             ((System.ComponentModel.ISupportInitialize)(this.picASCOM)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownSettleBuffer)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpMaxPosition)).BeginInit();
@@ -61,7 +67,7 @@ namespace ASCOM.DeepSkyDad.AF1
             // 
             this.cmdOK.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.cmdOK.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.cmdOK.Location = new System.Drawing.Point(474, 270);
+            this.cmdOK.Location = new System.Drawing.Point(474, 324);
             this.cmdOK.Name = "cmdOK";
             this.cmdOK.Size = new System.Drawing.Size(59, 24);
             this.cmdOK.TabIndex = 0;
@@ -73,7 +79,7 @@ namespace ASCOM.DeepSkyDad.AF1
             // 
             this.cmdCancel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.cmdCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.cmdCancel.Location = new System.Drawing.Point(541, 269);
+            this.cmdCancel.Location = new System.Drawing.Point(541, 323);
             this.cmdCancel.Name = "cmdCancel";
             this.cmdCancel.Size = new System.Drawing.Size(59, 25);
             this.cmdCancel.TabIndex = 1;
@@ -107,7 +113,7 @@ namespace ASCOM.DeepSkyDad.AF1
             // chkTrace
             // 
             this.chkTrace.AutoSize = true;
-            this.chkTrace.Location = new System.Drawing.Point(18, 235);
+            this.chkTrace.Location = new System.Drawing.Point(18, 291);
             this.chkTrace.Name = "chkTrace";
             this.chkTrace.Size = new System.Drawing.Size(69, 17);
             this.chkTrace.TabIndex = 6;
@@ -135,6 +141,7 @@ namespace ASCOM.DeepSkyDad.AF1
             this.comboBoxStepSize.Name = "comboBoxStepSize";
             this.comboBoxStepSize.Size = new System.Drawing.Size(121, 21);
             this.comboBoxStepSize.TabIndex = 8;
+            this.comboBoxStepSize.SelectedIndexChanged += new System.EventHandler(this.comboBoxStepSize_SelectedIndexChanged);
             // 
             // chkResetOnConnect
             // 
@@ -171,11 +178,10 @@ namespace ASCOM.DeepSkyDad.AF1
             // chkAlwaysOn
             // 
             this.chkAlwaysOn.AutoSize = true;
-            this.chkAlwaysOn.Location = new System.Drawing.Point(18, 189);
+            this.chkAlwaysOn.Location = new System.Drawing.Point(18, 245);
             this.chkAlwaysOn.Name = "chkAlwaysOn";
-            this.chkAlwaysOn.Size = new System.Drawing.Size(182, 17);
+            this.chkAlwaysOn.Size = new System.Drawing.Size(15, 14);
             this.chkAlwaysOn.TabIndex = 15;
-            this.chkAlwaysOn.Text = "Always on (useful for focuser slip)";
             this.chkAlwaysOn.UseVisualStyleBackColor = true;
             this.chkAlwaysOn.CheckedChanged += new System.EventHandler(this.chkAlwaysOn_CheckedChanged);
             // 
@@ -203,7 +209,7 @@ namespace ASCOM.DeepSkyDad.AF1
             // buttonFirmwareInfo
             // 
             this.buttonFirmwareInfo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.buttonFirmwareInfo.Location = new System.Drawing.Point(25, 270);
+            this.buttonFirmwareInfo.Location = new System.Drawing.Point(25, 324);
             this.buttonFirmwareInfo.Name = "buttonFirmwareInfo";
             this.buttonFirmwareInfo.Size = new System.Drawing.Size(97, 24);
             this.buttonFirmwareInfo.TabIndex = 18;
@@ -214,7 +220,7 @@ namespace ASCOM.DeepSkyDad.AF1
             // chkReverseDirection
             // 
             this.chkReverseDirection.AutoSize = true;
-            this.chkReverseDirection.Location = new System.Drawing.Point(18, 212);
+            this.chkReverseDirection.Location = new System.Drawing.Point(18, 268);
             this.chkReverseDirection.Name = "chkReverseDirection";
             this.chkReverseDirection.Size = new System.Drawing.Size(109, 17);
             this.chkReverseDirection.TabIndex = 20;
@@ -327,11 +333,81 @@ namespace ASCOM.DeepSkyDad.AF1
             0});
             this.numericSetPositionOnConnectValue.Visible = false;
             // 
+            // alwaysOnLabel
+            // 
+            this.alwaysOnLabel.AutoSize = true;
+            this.alwaysOnLabel.Location = new System.Drawing.Point(35, 245);
+            this.alwaysOnLabel.Name = "alwaysOnLabel";
+            this.alwaysOnLabel.Size = new System.Drawing.Size(163, 13);
+            this.alwaysOnLabel.TabIndex = 34;
+            this.alwaysOnLabel.Text = "Always on (useful for focuser slip)";
+            // 
+            // buttonReboot
+            // 
+            this.buttonReboot.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.buttonReboot.Location = new System.Drawing.Point(127, 324);
+            this.buttonReboot.Name = "buttonReboot";
+            this.buttonReboot.Size = new System.Drawing.Size(97, 24);
+            this.buttonReboot.TabIndex = 35;
+            this.buttonReboot.Text = "Reboot AF1";
+            this.buttonReboot.UseVisualStyleBackColor = true;
+            this.buttonReboot.Click += new System.EventHandler(this.buttonReboot_Click);
+            // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.label7.Location = new System.Drawing.Point(15, 184);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(76, 13);
+            this.label7.TabIndex = 37;
+            this.label7.Text = "Current - move";
+            // 
+            // currentMoveComboBox
+            // 
+            this.currentMoveComboBox.FormattingEnabled = true;
+            this.currentMoveComboBox.Items.AddRange(new object[] {
+            "25%",
+            "50%",
+            "75%",
+            "100%"});
+            this.currentMoveComboBox.Location = new System.Drawing.Point(161, 180);
+            this.currentMoveComboBox.Name = "currentMoveComboBox";
+            this.currentMoveComboBox.Size = new System.Drawing.Size(121, 21);
+            this.currentMoveComboBox.TabIndex = 36;
+            // 
+            // label8
+            // 
+            this.label8.AutoSize = true;
+            this.label8.Location = new System.Drawing.Point(15, 211);
+            this.label8.Name = "label8";
+            this.label8.Size = new System.Drawing.Size(97, 13);
+            this.label8.TabIndex = 39;
+            this.label8.Text = "Current - always on";
+            // 
+            // currentAoComboBox
+            // 
+            this.currentAoComboBox.FormattingEnabled = true;
+            this.currentAoComboBox.Items.AddRange(new object[] {
+            "25%",
+            "50%",
+            "75%",
+            "100%"});
+            this.currentAoComboBox.Location = new System.Drawing.Point(161, 207);
+            this.currentAoComboBox.Name = "currentAoComboBox";
+            this.currentAoComboBox.Size = new System.Drawing.Size(121, 21);
+            this.currentAoComboBox.TabIndex = 38;
+            // 
             // SetupDialogForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(610, 306);
+            this.ClientSize = new System.Drawing.Size(610, 360);
+            this.Controls.Add(this.label8);
+            this.Controls.Add(this.currentAoComboBox);
+            this.Controls.Add(this.label7);
+            this.Controls.Add(this.currentMoveComboBox);
+            this.Controls.Add(this.buttonReboot);
+            this.Controls.Add(this.alwaysOnLabel);
             this.Controls.Add(this.numericSetPositionOnConnectValue);
             this.Controls.Add(this.chkSetPositionOnConnect);
             this.Controls.Add(this.label11);
@@ -395,5 +471,11 @@ namespace ASCOM.DeepSkyDad.AF1
         private System.Windows.Forms.Label label11;
         private System.Windows.Forms.CheckBox chkSetPositionOnConnect;
         private System.Windows.Forms.NumericUpDown numericSetPositionOnConnectValue;
+        private System.Windows.Forms.Label alwaysOnLabel;
+        private System.Windows.Forms.Button buttonReboot;
+        private System.Windows.Forms.Label label7;
+        private System.Windows.Forms.ComboBox currentMoveComboBox;
+        private System.Windows.Forms.Label label8;
+        private System.Windows.Forms.ComboBox currentAoComboBox;
     }
 }

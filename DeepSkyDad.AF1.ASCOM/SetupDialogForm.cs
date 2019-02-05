@@ -39,6 +39,8 @@ namespace ASCOM.DeepSkyDad.AF1
             Focuser.alwaysOn = chkAlwaysOn.Checked;
             Focuser.reverseDirection = chkReverseDirection.Checked;
             Focuser.settleBuffer = (int)numericUpDownSettleBuffer.Value;
+            Focuser.currentMove = (string)currentMoveComboBox.SelectedItem;
+            Focuser.currentAo = (string)currentAoComboBox.SelectedItem;
         }
 
         private void cmdCancel_Click(object sender, EventArgs e) // Cancel button event handler
@@ -65,6 +67,12 @@ namespace ASCOM.DeepSkyDad.AF1
 
         private void InitUI()
         {
+            ToolTip tt = new ToolTip();
+            tt.AutoPopDelay = 5000;
+            tt.InitialDelay = 1000;
+            tt.ReshowDelay = 500;
+            tt.SetToolTip(alwaysOnLabel, "Can only be turned off for step size 1. With microstep precision focusing, coils must be powered at all times.");
+
             chkTrace.Checked = Focuser.traceState;
             numericUpMaxPosition.Value = Focuser.maxPosition;
             numericUpMaxMovement.Value = Focuser.maxMovement;
@@ -74,6 +82,7 @@ namespace ASCOM.DeepSkyDad.AF1
             numericSetPositionOnConnectValue.Value = Focuser.setPositionOnConnectValue;
             numericSetPositionOnConnectValue.Visible = Focuser.setPositonOnConnect;
             chkAlwaysOn.Checked = Focuser.alwaysOn;
+            chkAlwaysOn.Enabled = Focuser.stepSize == "1";
             chkReverseDirection.Checked = Focuser.reverseDirection;
             numericUpDownSettleBuffer.Value = Focuser.settleBuffer;
             // set the list of com ports to those that are currently available
@@ -84,6 +93,8 @@ namespace ASCOM.DeepSkyDad.AF1
             {
                 comboBoxComPort.SelectedItem = Focuser.comPort;
             }
+            currentMoveComboBox.Text = Focuser.currentMove;
+            currentAoComboBox.Text = Focuser.currentAo;
         }
 
         private void label3_Click(object sender, EventArgs e)
@@ -118,7 +129,6 @@ namespace ASCOM.DeepSkyDad.AF1
 
         private void buttonFirmwareInfo_Click(object sender, EventArgs e)
         {
-
             var comPort = (string)comboBoxComPort.SelectedItem;
             if (string.IsNullOrWhiteSpace(comPort))
             {
@@ -149,7 +159,6 @@ namespace ASCOM.DeepSkyDad.AF1
                 if (_f.Connected)
                     _f.Connected = false;
             }
-         
         }
 
         private void ShowNonBlockingMessageBox(string text, string caption)
@@ -166,6 +175,46 @@ namespace ASCOM.DeepSkyDad.AF1
         private void chkSetPositionOnConnect_CheckedChanged(object sender, EventArgs e)
         {
             numericSetPositionOnConnectValue.Visible = chkSetPositionOnConnect.Checked;
+        }
+
+        private void comboBoxStepSize_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if(comboBoxStepSize.Text != "1")
+            {
+                chkAlwaysOn.Enabled = false;
+                chkAlwaysOn.Checked = true;
+            } else
+            {
+                chkAlwaysOn.Enabled = true;
+            }
+        }
+
+        private void buttonReboot_Click(object sender, EventArgs e)
+        {
+            var comPort = (string)comboBoxComPort.SelectedItem;
+            if (string.IsNullOrWhiteSpace(comPort))
+            {
+                MessageBox.Show("Please select COM port", "Error");
+                return;
+            }
+
+            try
+            {
+                Focuser.comPort = comPort;
+                _f.Connected = true;
+                _f.CommandBlind("RBOT");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Connection to the focuser failed ({ex.Message})", "Error");
+            }
+            finally
+            {
+                if (_f.Connected)
+                    _f.Disconnect();
+            }
+
+            MessageBox.Show("Reboot successful!");
         }
     }
 }

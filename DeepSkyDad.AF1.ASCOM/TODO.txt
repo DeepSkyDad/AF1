@@ -1,1 +1,0 @@
-﻿-always ON (holding position when focuser is not strong enough)

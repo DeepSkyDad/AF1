@@ -96,6 +96,10 @@ namespace ASCOM.DeepSkyDad.AF1
         internal static string settleBufferDefault = "0";
         internal static string reverseDirectionProfileName = "Reverse direction";
         internal static string reverseDirectionDefault = "false";
+        internal static string currentMoveProfileName = "Current - move";
+        internal static string currentMoveDefault = "75%";
+        internal static string currentAoProfileName = "Current - always on";
+        internal static string currentAoDefault = "50%";
 
         internal static string comPort; // Variables to hold the currrent device configuration
         internal static int maxPosition;
@@ -108,6 +112,8 @@ namespace ASCOM.DeepSkyDad.AF1
         internal static bool alwaysOn;
         internal static int settleBuffer;
         internal static bool reverseDirection;
+        internal static string currentMove;
+        internal static string currentAo;
         internal static int commandTimeout = 2000;
 
         internal static int? maxIncrement = null;
@@ -248,6 +254,14 @@ namespace ASCOM.DeepSkyDad.AF1
             astroUtilities = null;
         }
 
+        public void Disconnect()
+        {
+            connectedState = false;
+            LogMessage("Connected Set", "Disconnecting from port {0}", comPort);
+            serial.Connected = false;
+            serial.Dispose();
+        }
+
         public bool Connected
         {
             get
@@ -268,11 +282,22 @@ namespace ASCOM.DeepSkyDad.AF1
                     serial = new Serial();
                     serial.Speed = SerialSpeed.ps9600;
                     serial.PortName = comPort;
+                    serial.DTREnable = false;
+                    //serial.Handshake = SerialHandshake.None;
                     serial.Connected = true;
                     serial.ReceiveTimeoutMs = commandTimeout;
-                    serial.ReceiveTerminated("(READY)"); //wait for ready signal - this is needed because arduino auto-resets when serial connection is established to it (it can be prevented by putting capacitor between 5v and reset but not neccessary for autofocuser)
+                    //serial.ReceiveTerminated("(READY)"); //wait for ready signal - this is needed because arduino auto-resets when serial connection is established to it (it can be prevented by putting capacitor between 5v and reset but not neccessary for autofocuser)
 
-                    var actualFirmwareVersion = CommandString("GFRM");
+                    string actualFirmwareVersion = string.Empty;
+                    try
+                    {
+                        actualFirmwareVersion = CommandString("GFRM");
+                    }
+                    catch(Exception)
+                    {
+                        actualFirmwareVersion = CommandString("GFRM");
+                    }
+
                     if (actualFirmwareVersion != firmwareVersion)
                         throw new ASCOM.DriverException($"Invalid firmware version - required: {firmwareVersion}, installed {actualFirmwareVersion}");
 
@@ -302,7 +327,7 @@ namespace ASCOM.DeepSkyDad.AF1
                         CommandString($"SPOS{setPositionOnConnectValue}");
                         setPositionOnConnectValue = maxPosition / 2;
                     }
-
+                    
                     focuserPosition = (int)CommandLong("GPOS");
 
                     var ss = 2;
@@ -323,7 +348,52 @@ namespace ASCOM.DeepSkyDad.AF1
                         ss = 8;
                     }
 
-                    CommandString($"CONF{ss}|{(alwaysOn ? 1 : 0)}|{(reverseDirection ? 1 : 0)}|{maxPosition}|{maxMovement}|{settleBuffer}");
+                    if(!alwaysOn && ss != 1)
+                    {
+                        using (Profile driverProfile = new Profile())
+                        {
+                            alwaysOn = true;
+                            driverProfile.DeviceType = "Focuser";
+                            driverProfile.WriteValue(driverID, alwaysOnProfileName, alwaysOn.ToString());
+                        }
+                    }
+
+                    var currentMoveInt = 160;
+                    var currentAoInt = 170;
+
+                    switch(currentMove)
+                    {
+                        case "25%":
+                            currentMoveInt = 180;
+                            break;
+                        case "50%":
+                            currentMoveInt = 170;
+                            break;
+                        case "75%":
+                            currentMoveInt = 160;
+                            break;
+                        case "100%":
+                            currentMoveInt = 150;
+                            break;
+                    }
+
+                    switch (currentAo)
+                    {
+                        case "25%":
+                            currentAoInt = 190;
+                            break;
+                        case "50%":
+                            currentAoInt = 180;
+                            break;
+                        case "75%":
+                            currentAoInt = 170;
+                            break;
+                        case "100%":
+                            currentAoInt = 160;
+                            break;
+                    }
+
+                    CommandString($"CONF{ss}|{(alwaysOn ? 1 : 0)}|{(reverseDirection ? 1 : 0)}|{maxPosition}|{maxMovement}|{settleBuffer}|{currentMoveInt}|{currentAoInt}");
                     //CommandString($"SAON{(alwaysOn ? 1 : 0)}");
                     //CommandString($"SREV{(reverseDirection ? 1 : 0)}");
                     //CommandString($"SMXP{maxPosition}");
@@ -336,10 +406,7 @@ namespace ASCOM.DeepSkyDad.AF1
                     CommandString($"SAON0");
                     Thread.Sleep(100);
 
-                    connectedState = false;
-                    LogMessage("Connected Set", "Disconnecting from port {0}", comPort);
-                    serial.Connected = false;
-                    serial.Dispose();
+                    Disconnect();
                 }
             }
         }
@@ -448,7 +515,7 @@ namespace ASCOM.DeepSkyDad.AF1
             {
                 if(maxIncrement == null)
                 {
-                    maxIncrement = (int)CommandLong("GMXS");
+                    maxIncrement = (int)CommandLong("GMXM");
                 }
                
                 tl.LogMessage("MaxIncrement Get", maxIncrement.ToString());
@@ -652,6 +719,8 @@ namespace ASCOM.DeepSkyDad.AF1
                 alwaysOn = Convert.ToBoolean(driverProfile.GetValue(driverID, alwaysOnProfileName, string.Empty, alwaysOnDefault));
                 reverseDirection = Convert.ToBoolean(driverProfile.GetValue(driverID, reverseDirectionProfileName, string.Empty, reverseDirectionDefault));
                 settleBuffer = Convert.ToInt32(driverProfile.GetValue(driverID, settleBufferProfileName, string.Empty, settleBufferDefault));
+                currentMove = driverProfile.GetValue(driverID, currentMoveProfileName, string.Empty, currentMoveDefault);
+                currentAo = driverProfile.GetValue(driverID, currentAoProfileName, string.Empty, currentAoDefault);
             }
         }
 
@@ -674,6 +743,8 @@ namespace ASCOM.DeepSkyDad.AF1
                 driverProfile.WriteValue(driverID, alwaysOnProfileName, alwaysOn.ToString());
                 driverProfile.WriteValue(driverID, settleBufferProfileName, settleBuffer.ToString());
                 driverProfile.WriteValue(driverID, reverseDirectionProfileName, reverseDirection.ToString());
+                driverProfile.WriteValue(driverID, currentMoveProfileName, currentMove);
+                driverProfile.WriteValue(driverID, currentAoProfileName, currentAo);
             }
         }
 
