@@ -628,9 +628,9 @@ void executeCommand()
     Serial.println(_eepromAfState[EEPROM_AF_STATE_STEP_MODE]);
     Serial.print("Reverse direction: ");
     Serial.println(_eepromAfState[EEPROM_AF_STATE_REVERSE_DIRECTION]);
-    Serial.print("Move motorDir: ");
+    Serial.print("Move current: ");
     Serial.println(_eepromAfState[EEPROM_AF_STATE_CURRENT_MOVE]);
-    Serial.print("Always on motorDir: ");
+    Serial.print("Always on current: ");
     Serial.println(_eepromAfState[EEPROM_AF_STATE_CURRENT_AO]);
   }
   else
