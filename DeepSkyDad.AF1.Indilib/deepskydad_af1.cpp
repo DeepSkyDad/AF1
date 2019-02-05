@@ -542,15 +542,15 @@ bool DeepSkyDadAF1::ISNewSwitch(const char * dev, const char * name, ISState * s
         // Current - move
         if (strcmp(CurrentMoveSP.name, name) == 0)
         {
-            int current = IUFindOnSwitchIndex(&CurrentAoSP);
+            int current = IUFindOnSwitchIndex(&CurrentMoveSP);
 
-            IUUpdateSwitch(&CurrentAoSP, states, names, n);
+            IUUpdateSwitch(&CurrentMoveSP, states, names, n);
 
-            int targetCurrent = IUFindOnSwitchIndex(&CurrentAoSP);
+            int targetCurrent = IUFindOnSwitchIndex(&CurrentMoveSP);
 
             if (current == targetCurrent)
             {
-                IDSetSwitch(&CurrentAoSP, nullptr);
+                IDSetSwitch(&CurrentMoveSP, nullptr);
                 return true;
             }
 
@@ -571,35 +571,35 @@ bool DeepSkyDadAF1::ISNewSwitch(const char * dev, const char * name, ISState * s
             }
 
             char cmd[DSD_RES]= {0};
-            snprintf(cmd, DSD_RES, "[SCAO%03d]", targetCurrentValue);
+            snprintf(cmd, DSD_RES, "[SCMV%03d]", targetCurrentValue);
 
             bool rc = sendCommandSet(cmd);
             if (!rc)
             {
-                IUResetSwitch(&CurrentAoSP);
-                CurrentAoS[current].s = ISS_ON;
-                CurrentAoSP.s              = IPS_ALERT;
-                IDSetSwitch(&CurrentAoSP, nullptr);
+                IUResetSwitch(&CurrentMoveSP);
+                CurrentMoveS[current].s = ISS_ON;
+                CurrentMoveSP.s              = IPS_ALERT;
+                IDSetSwitch(&CurrentMoveSP, nullptr);
                 return false;
             }
 
-            CurrentAoSP.s = IPS_OK;
-            IDSetSwitch(&CurrentAoSP, nullptr);
+            CurrentMoveSP.s = IPS_OK;
+            IDSetSwitch(&CurrentMoveSP, nullptr);
             return true;
         }
 
         // Current - always on
         if (strcmp(CurrentAoSP.name, name) == 0)
         {
-            int current = IUFindOnSwitchIndex(&CurrentMoveSP);
+            int current = IUFindOnSwitchIndex(&CurrentAoSP);
 
-            IUUpdateSwitch(&CurrentMoveSP, states, names, n);
+            IUUpdateSwitch(&CurrentAoSP, states, names, n);
 
-            int targetCurrent = IUFindOnSwitchIndex(&CurrentMoveSP);
+            int targetCurrent = IUFindOnSwitchIndex(&CurrentAoSP);
 
             if (current == targetCurrent)
             {
-                IDSetSwitch(&CurrentMoveSP, nullptr);
+                IDSetSwitch(&CurrentAoSP, nullptr);
                 return true;
             }
 
@@ -620,20 +620,20 @@ bool DeepSkyDadAF1::ISNewSwitch(const char * dev, const char * name, ISState * s
             }
 
             char cmd[DSD_RES]= {0};
-            snprintf(cmd, DSD_RES, "[SCMV%03d]", targetCurrentValue);
+            snprintf(cmd, DSD_RES, "[SCAO%03d]", targetCurrentValue);
 
             bool rc = sendCommandSet(cmd);
             if (!rc)
             {
-                IUResetSwitch(&CurrentMoveSP);
-                CurrentMoveS[current].s = ISS_ON;
-                CurrentMoveSP.s              = IPS_ALERT;
-                IDSetSwitch(&CurrentMoveSP, nullptr);
+                IUResetSwitch(&CurrentAoSP);
+                CurrentAoS[current].s = ISS_ON;
+                CurrentAoSP.s              = IPS_ALERT;
+                IDSetSwitch(&CurrentAoSP, nullptr);
                 return false;
             }
 
-            CurrentMoveSP.s = IPS_OK;
-            IDSetSwitch(&CurrentMoveSP, nullptr);
+            CurrentAoSP.s = IPS_OK;
+            IDSetSwitch(&CurrentAoSP, nullptr);
             return true;
         }
     }
