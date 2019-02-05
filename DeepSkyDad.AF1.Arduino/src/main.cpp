@@ -6,7 +6,11 @@
     Each index contains different property, with last one containing checksum (sum of all previous values, so we can validate its contents).
     Additionally, values are saved to a different address every time. Writing to same address every time would wear EEPROM out faster.
     Autofocuseer state:
+<<<<<<< HEAD
     {<position>, <maxPosition>, <maxMovement>, <stepMode>, <isAlwaysOn>, <settleBufferMs>, <reverseDirection>, <currentMove>, <currentAo>, <checksum>}
+=======
+    {<position>, <maxPosition>, <maxMovement>, <stepMode>, <isAlwaysOn>, <settleBufferMs>, <reverseDirection>, <checksum>}
+>>>>>>> 639f21ef9294d1c257c3d22ce2b72e2267a4e9f9
 
   COMMAND SET
     Commands are executed via serial COM port communication. 
@@ -43,6 +47,7 @@
 #define EEPROM_AF_STATE_IS_ALWAYS_ON 4
 #define EEPROM_AF_STATE_SETTLE_BUFFER_MS 5
 #define EEPROM_AF_STATE_REVERSE_DIRECTION 6
+<<<<<<< HEAD
 #define EEPROM_AF_STATE_CURRENT_MOVE 7
 #define EEPROM_AF_STATE_CURRENT_AO 8
 #define EEPROM_AF_STATE_CHECKSUM 9
@@ -51,6 +56,14 @@
 long _eepromAfState[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 9999};
 long _eepromAfPrevState[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 9999};
 long _eepromAfStateDefault[] = {50000, 100000, 5000, 2, 0, 0, 0, 160, 180, 0};
+=======
+#define EEPROM_AF_STATE_CHECKSUM 7
+
+//{<position>, <maxPosition>, <maxMovement>, <stepMode>, <isAlwaysOn>, <settleBufferMs>, <reverseDirection>, <checksum>}
+long _eepromAfState[] = {0, 0, 0, 0, 0, 0, 0, 9999};
+long _eepromAfPrevState[] = {0, 0, 0, 0, 0, 0, 0, 9999};
+long _eepromAfStateDefault[] = {50000, 100000, 5000, 1, 1, 0, 0, 0};
+>>>>>>> 639f21ef9294d1c257c3d22ce2b72e2267a4e9f9
 int _eepromAfStatePropertyCount = sizeof(_eepromAfState) / sizeof(long);
 int _eepromAfStateAddressSize = sizeof(_eepromAfState);
 int _eepromAfStateAdressesCount = EEPROMSizeATmega328 / _eepromAfStateAddressSize;
@@ -69,7 +82,7 @@ bool _eepromSaveAfState;
 #define MP6500_PIN_I1_AO_MIN 160
 #define MP6500_PIN_I1_AO_MAX 190
 // MS1/MS2 sets stepping mode 00 = F, 10 = 1/2, 01 = 1/4, 11 = 1/8
-// steps per revolution = 200, 400, 800, 1600
+// consider using only full step, since microstepping requires mandatory always on flag?
 
 #define MP6500_PIN_MS2 7
 #define MP6500_PIN_MS1 8
