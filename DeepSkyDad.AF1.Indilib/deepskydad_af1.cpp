@@ -1,6 +1,6 @@
 /*
     Deep Sky Dad AF1 focuser
-    Based on Moonlite driver.
+    Based on Moonline driver.
     Copyright (C) 2013-2019 Jasem Mutlaq (mutlaqja@ikarustech.com)
 
     This library is free software; you can redistribute it and/or
@@ -72,17 +72,12 @@ void ISSnoopDevice(XMLEle * root)
 
 DeepSkyDadAF1::DeepSkyDadAF1()
 {
-    // Can move in Absolute & Relative motions, can AbortFocuser motion, and has variable speed.
-    FI::SetCapability(FOCUSER_CAN_ABS_MOVE | FOCUSER_CAN_REL_MOVE | FOCUSER_CAN_ABORT);
+    FI::SetCapability(FOCUSER_CAN_ABS_MOVE | FOCUSER_CAN_REL_MOVE | FOCUSER_CAN_SYNC | FOCUSER_CAN_REVERSE | FOCUSER_CAN_ABORT);
 }
 
 bool DeepSkyDadAF1::initProperties()
 {
     INDI::Focuser::initProperties();
-
-    FocusSpeedN[0].min   = 1;
-    FocusSpeedN[0].max   = 1;
-    FocusSpeedN[0].value = 1;
 
     // Step Mode
     IUFillSwitch(&StepModeS[EIGHT], "EIGHT", "Eight Step", ISS_OFF);
@@ -92,15 +87,15 @@ bool DeepSkyDadAF1::initProperties()
     IUFillSwitchVector(&StepModeSP, StepModeS, 4, getDeviceName(), "Step Mode", "", OPTIONS_TAB, IP_RW, ISR_1OFMANY, 0, IPS_IDLE);
 
     /* Relative and absolute movement */
-    FocusRelPosN[0].min   = 0;
-    FocusRelPosN[0].max   = 5000;
-    FocusRelPosN[0].value = 0;
-    FocusRelPosN[0].step  = 1000;
+    FocusRelPosN[0].min = 0.;
+    FocusRelPosN[0].max = 5000.;
+    FocusRelPosN[0].value = 0.;
+    FocusRelPosN[0].step = 10.;
 
-    FocusAbsPosN[0].min   = 0;
-    FocusAbsPosN[0].max   = 100000;
-    FocusAbsPosN[0].value = 50000;
-    FocusAbsPosN[0].step  = 1000;
+    FocusAbsPosN[0].min = 0.;
+    FocusAbsPosN[0].max = 100000.;
+    FocusAbsPosN[0].value = 50000.;
+    FocusAbsPosN[0].step = 500.;
 
     // Settle buffer
     IUFillNumber(&SettleBufferN[0], "SETTLE_BUFFER", "Settle buffer", "%5.0f", 0, 99999, 100, 0);
@@ -111,6 +106,20 @@ bool DeepSkyDadAF1::initProperties()
     IUFillSwitch(&AlwaysOnS[ALWAYS_ON_NO], "NO", "No", ISS_OFF);
     IUFillSwitch(&AlwaysOnS[ALWAYS_ON_YES], "YES", "Yes", ISS_ON);
     IUFillSwitchVector(&AlwaysOnSP, AlwaysOnS, 2, getDeviceName(), "Always on", "", OPTIONS_TAB, IP_RW, ISR_1OFMANY, 0, IPS_IDLE);
+
+    // Current move
+    IUFillSwitch(&CurrentMoveS[CURRENT_25], "CMV_25", "25%", ISS_OFF);
+    IUFillSwitch(&CurrentMoveS[CURRENT_50], "CMV_50", "50%", ISS_OFF);
+    IUFillSwitch(&CurrentMoveS[CURRENT_75], "CMV_75", "75%", ISS_ON);
+    IUFillSwitch(&CurrentMoveS[CURRENT_100], "CMV_100", "100%", ISS_OFF);
+    IUFillSwitchVector(&CurrentMoveSP, CurrentMoveS, 4, getDeviceName(), "Current - move", "", OPTIONS_TAB, IP_RW, ISR_1OFMANY, 0, IPS_IDLE);
+
+    // Current move
+    IUFillSwitch(&CurrentAoS[CURRENT_25], "CAO_25", "25%", ISS_OFF);
+    IUFillSwitch(&CurrentAoS[CURRENT_50], "CAO_50", "50%", ISS_OFF);
+    IUFillSwitch(&CurrentAoS[CURRENT_75], "CAO_75", "75%", ISS_ON);
+    IUFillSwitch(&CurrentAoS[CURRENT_100], "CAO_100", "100%", ISS_OFF);
+    IUFillSwitchVector(&CurrentAoSP, CurrentAoS, 4, getDeviceName(), "Current - always on", "", OPTIONS_TAB, IP_RW, ISR_1OFMANY, 0, IPS_IDLE);
 
     setDefaultPollingPeriod(500);
     addDebugControl();
@@ -127,6 +136,8 @@ bool DeepSkyDadAF1::updateProperties()
         defineSwitch(&StepModeSP);
         defineNumber(&SettleBufferNP);
         defineSwitch(&AlwaysOnSP);
+        defineSwitch(&CurrentMoveSP);
+        defineSwitch(&CurrentAoSP);
 
         GetFocusParams();
 
@@ -137,6 +148,8 @@ bool DeepSkyDadAF1::updateProperties()
         deleteProperty(StepModeSP.name);
         deleteProperty(SettleBufferNP.name);
         deleteProperty(AlwaysOnSP.name);
+        deleteProperty(CurrentMoveSP.name);
+        deleteProperty(CurrentAoSP.name);
     }
 
     return true;
@@ -164,35 +177,37 @@ bool DeepSkyDadAF1::Ack()
 {
     int nbytes_written = 0, nbytes_read = 0, rc = -1;
     char errstr[MAXRBUF];
-    char resp[1]= {0};
-
-    //tcflush(PortFD, TCIOFLUSH);
+    char resp[5]= {0};
 
     sleep(2);
 
-    /*bool readySignalSuccess = (rc = tty_read(PortFD, resp, 7, DSD_TIMEOUT, &nbytes_read)) == TTY_OK;
-    if(readySignalSuccess && strncmp(resp, "(READY)", 7) == 0)
-        return true;
-
-    tty_error_msg(rc, errstr, MAXRBUF);
-    LOG_INFO("ACK - Waiting for (READY) failed, checking if already connected");
-    */
     tcflush(PortFD, TCIOFLUSH);
 
-    bool transmissionSuccess = (rc = tty_write(PortFD, "[GPOS]", 6, &nbytes_written)) == TTY_OK;
+    bool transmissionSuccess = (rc = tty_write(PortFD, "[SMXP100000]", 12, &nbytes_written)) == TTY_OK;
     if(!transmissionSuccess) {
         tty_error_msg(rc, errstr, MAXRBUF);
         LOG_ERROR("ACK - write getPosition failed");
     }
 
-    memset(resp, 0, sizeof resp);
-    bool responseSuccess = (rc = tty_read(PortFD, resp, 1, DSD_TIMEOUT, &nbytes_read)) == TTY_OK;
+    bool responseSuccess = (rc = tty_read(PortFD, resp, 4, DSD_TIMEOUT, &nbytes_read)) == TTY_OK;
     if(!responseSuccess) {
         tty_error_msg(rc, errstr, MAXRBUF);
-        LOG_ERROR("ACK - read getPosition response failed");
+        LOG_ERROR("ACK - read setMaxPosition response failed");
     }
 
     tcflush(PortFD, TCIOFLUSH);
+
+    transmissionSuccess = (rc = tty_write(PortFD, "[SMXM5000]", 10, &nbytes_written)) == TTY_OK;
+    if(!transmissionSuccess) {
+        tty_error_msg(rc, errstr, MAXRBUF);
+        LOG_ERROR("ACK - write getPosition failed");
+    }
+
+    responseSuccess = (rc = tty_read(PortFD, resp, 4, DSD_TIMEOUT, &nbytes_read)) == TTY_OK;
+    if(!responseSuccess) {
+        tty_error_msg(rc, errstr, MAXRBUF);
+        LOG_ERROR("ACK - read setMaxMovement response failed");
+    }
 
     return transmissionSuccess && responseSuccess;
 }
@@ -238,13 +253,6 @@ bool DeepSkyDadAF1::readPosition()
         LOGF_ERROR("Unknown error: focuser position value (%s)", res);
         return false;
     }
-
-    return true;
-}
-
-bool DeepSkyDadAF1::readSpeed()
-{
-    FocusSpeedN[0].value = 1;
 
     return true;
 }
@@ -297,6 +305,72 @@ bool DeepSkyDadAF1::readAlwaysOn()
     return true;
 }
 
+bool DeepSkyDadAF1::readCurrentMove()
+{
+    char res[DSD_RES]= {0};
+
+    if (sendCommand("[GCMV]", res) == false)
+        return false;
+
+    if (strcmp(res, "(180)") == 0) {
+        CurrentMoveSP.s = IPS_IDLE;
+        CurrentMoveS[CURRENT_25].s = ISS_ON;
+    }
+    else if (strcmp(res, "(170)") == 0) {
+        CurrentMoveSP.s = IPS_IDLE;
+        CurrentMoveS[CURRENT_50].s = ISS_ON;
+    }
+    else if (strcmp(res, "(160)") == 0) {
+        CurrentMoveSP.s = IPS_IDLE;
+        CurrentMoveS[CURRENT_75].s = ISS_ON;
+    }
+    else if (strcmp(res, "(150)") == 0) {
+        CurrentMoveSP.s = IPS_IDLE;
+        CurrentMoveS[CURRENT_100].s = ISS_ON;
+    }
+
+    else
+    {
+        LOGF_ERROR("Unknown error: currentMove value (%s)", res);
+        return false;
+    }
+
+    return true;
+}
+
+bool DeepSkyDadAF1::readCurrentAo()
+{
+    char res[DSD_RES]= {0};
+
+    if (sendCommand("[GCAO]", res) == false)
+        return false;
+
+    if (strcmp(res, "(190)") == 0) {
+        CurrentAoSP.s = IPS_IDLE;
+        CurrentAoS[CURRENT_25].s = ISS_ON;
+    }
+    else if (strcmp(res, "(180)") == 0) {
+        CurrentAoSP.s = IPS_IDLE;
+        CurrentAoS[CURRENT_50].s = ISS_ON;
+    }
+    else if (strcmp(res, "(170)") == 0) {
+        CurrentAoSP.s = IPS_IDLE;
+        CurrentAoS[CURRENT_75].s = ISS_ON;
+    }
+    else if (strcmp(res, "(160)") == 0) {
+        CurrentAoSP.s = IPS_IDLE;
+        CurrentAoS[CURRENT_100].s = ISS_ON;
+    }
+
+    else
+    {
+        LOGF_ERROR("Unknown error: currentMove value (%s)", res);
+        return false;
+    }
+
+    return true;
+}
+
 bool DeepSkyDadAF1::isMoving()
 {
     char res[DSD_RES]= {0};
@@ -316,17 +390,31 @@ bool DeepSkyDadAF1::isMoving()
 bool DeepSkyDadAF1::SyncFocuser(uint32_t ticks)
 {
     char cmd[DSD_RES]= {0};
-    snprintf(cmd, DSD_RES, "[SYNC%06d]", ticks);
-    return sendCommandSet(cmd);
+    snprintf(cmd, DSD_RES, "[SPOS%06d]", ticks);
+    return sendCommand(cmd);
+}
+
+bool DeepSkyDadAF1::ReverseFocuser(bool enabled)
+{
+    char cmd[DSD_RES]= {0};
+    snprintf(cmd, DSD_RES, "[SREV%01d]", enabled ? 1 : 0);
+    return sendCommand(cmd);
 }
 
 bool DeepSkyDadAF1::MoveFocuser(uint32_t position)
 {
     char cmd[DSD_RES]= {0};
+    char res[DSD_RES]= {0};
     snprintf(cmd, DSD_RES, "[STRG%06d]", position);
     // Set Position First
-    if (sendCommandSet(cmd) == false)
+    if (sendCommand(cmd, res) == false)
         return false;
+
+    if(strcmp(res, "!101)") == 0) {
+        LOG_ERROR("MoveFocuserFailed - invalid target position (maximum relative movement is limited to 5000 steps)");
+        return false;
+    }
+
     // Now start motion toward position
     if (sendCommand("[SMOV]") == false)
         return false;
@@ -352,19 +440,45 @@ bool DeepSkyDadAF1::setStepMode(FocusStepMode mode)
     return sendCommandSet(cmd);
 }
 
-bool DeepSkyDadAF1::setAlwaysOn(AlwaysOn ao)
-{
-    char cmd[DSD_RES]= {0};
-
-    snprintf(cmd, DSD_RES, "[SAON%d]", ao == ALWAYS_ON_YES ? 1 : 0);
-    return sendCommandSet(cmd);
-}
-
 bool DeepSkyDadAF1::setSettleBuffer(uint32_t settleBuffer)
 {
     char cmd[DSD_RES]= {0};
     snprintf(cmd, DSD_RES, "[SBUF%06d]", settleBuffer);
     return sendCommandSet(cmd);
+}
+
+bool DeepSkyDadAF1::setAlwaysOnSwitch(char * names[], int n, ISState * states) {
+    int current_mode = IUFindOnSwitchIndex(&AlwaysOnSP);
+
+    IUUpdateSwitch(&AlwaysOnSP, states, names, n);
+
+    int target_mode = IUFindOnSwitchIndex(&AlwaysOnSP);
+
+    if (current_mode == target_mode)
+    {
+        IDSetSwitch(&AlwaysOnSP, nullptr);
+        return true;
+    }
+
+    char cmd[DSD_RES]= {0};
+    snprintf(cmd, DSD_RES, "[SAON%d]", target_mode);
+
+    bool rc = sendCommandSet(cmd);
+    if (!rc)
+    {
+        IUResetSwitch(&AlwaysOnSP);
+        AlwaysOnS[current_mode].s = ISS_ON;
+        AlwaysOnSP.s              = IPS_ALERT;
+        IDSetSwitch(&AlwaysOnSP, nullptr);
+        return false;
+    } else if (target_mode == 1) {
+        AlwaysOnSP.s = IPS_OK; //OK (green) if on
+    } else {
+        AlwaysOnSP.s = IPS_IDLE; //IDLE (gray) if off
+    }
+
+    IDSetSwitch(&AlwaysOnSP, nullptr);
+    return true;
 }
 
 bool DeepSkyDadAF1::ISNewSwitch(const char * dev, const char * name, ISState * states, char * names[], int n)
@@ -384,6 +498,7 @@ bool DeepSkyDadAF1::ISNewSwitch(const char * dev, const char * name, ISState * s
             {
                 StepModeSP.s = IPS_OK;
                 IDSetSwitch(&StepModeSP, nullptr);
+                return true;
             }
 
             FocusStepMode mode = FULL;
@@ -408,42 +523,117 @@ bool DeepSkyDadAF1::ISNewSwitch(const char * dev, const char * name, ISState * s
 
             StepModeSP.s = IPS_OK;
             IDSetSwitch(&StepModeSP, nullptr);
+
+            if(mode != FULL) {
+                AlwaysOnS[1].s = ISS_ON;
+                AlwaysOnS[0].s = ISS_OFF;
+                return setAlwaysOnSwitch(names, n, states);
+            }
+
             return true;
         }
 
         // Always on
         if (strcmp(AlwaysOnSP.name, name) == 0)
         {
-            int current_mode = IUFindOnSwitchIndex(&AlwaysOnSP);
+            return setAlwaysOnSwitch(names, n, states);
+        }
 
-            IUUpdateSwitch(&AlwaysOnSP, states, names, n);
+        // Current - move
+        if (strcmp(CurrentMoveSP.name, name) == 0)
+        {
+            int current = IUFindOnSwitchIndex(&CurrentAoSP);
 
-            int target_mode = IUFindOnSwitchIndex(&AlwaysOnSP);
+            IUUpdateSwitch(&CurrentAoSP, states, names, n);
 
-            if (current_mode == target_mode)
+            int targetCurrent = IUFindOnSwitchIndex(&CurrentAoSP);
+
+            if (current == targetCurrent)
             {
-                AlwaysOnSP.s = IPS_OK;
-                IDSetSwitch(&AlwaysOnSP, nullptr);
+                IDSetSwitch(&CurrentAoSP, nullptr);
+                return true;
             }
 
-            AlwaysOn mode = ALWAYS_ON_YES;
-            if(target_mode == 0)
-                mode = ALWAYS_ON_NO;
-            else if(target_mode == 1)
-                mode = ALWAYS_ON_YES;
+            int targetCurrentValue = 180;
+            switch(targetCurrent) {
+                case 0:
+                    targetCurrentValue = 190;
+                    break;
+                case 1:
+                    targetCurrentValue = 180;
+                    break;
+                case 2:
+                    targetCurrentValue = 170;
+                    break;
+                case 3:
+                    targetCurrentValue = 160;
+                    break;
+            }
 
-            bool rc = setAlwaysOn(mode);
+            char cmd[DSD_RES]= {0};
+            snprintf(cmd, DSD_RES, "[SCAO%03d]", targetCurrentValue);
+
+            bool rc = sendCommandSet(cmd);
             if (!rc)
             {
-                IUResetSwitch(&AlwaysOnSP);
-                AlwaysOnS[current_mode].s = ISS_ON;
-                AlwaysOnSP.s              = IPS_ALERT;
-                IDSetSwitch(&AlwaysOnSP, nullptr);
+                IUResetSwitch(&CurrentAoSP);
+                CurrentAoS[current].s = ISS_ON;
+                CurrentAoSP.s              = IPS_ALERT;
+                IDSetSwitch(&CurrentAoSP, nullptr);
                 return false;
             }
 
-            AlwaysOnSP.s = IPS_OK;
-            IDSetSwitch(&AlwaysOnSP, nullptr);
+            CurrentAoSP.s = IPS_OK;
+            IDSetSwitch(&CurrentAoSP, nullptr);
+            return true;
+        }
+
+        // Current - always on
+        if (strcmp(CurrentAoSP.name, name) == 0)
+        {
+            int current = IUFindOnSwitchIndex(&CurrentMoveSP);
+
+            IUUpdateSwitch(&CurrentMoveSP, states, names, n);
+
+            int targetCurrent = IUFindOnSwitchIndex(&CurrentMoveSP);
+
+            if (current == targetCurrent)
+            {
+                IDSetSwitch(&CurrentMoveSP, nullptr);
+                return true;
+            }
+
+            int targetCurrentValue = 160;
+            switch(targetCurrent) {
+                case 0:
+                    targetCurrentValue = 180;
+                    break;
+                case 1:
+                    targetCurrentValue = 170;
+                    break;
+                case 2:
+                    targetCurrentValue = 160;
+                    break;
+                case 3:
+                    targetCurrentValue = 150;
+                    break;
+            }
+
+            char cmd[DSD_RES]= {0};
+            snprintf(cmd, DSD_RES, "[SCMV%03d]", targetCurrentValue);
+
+            bool rc = sendCommandSet(cmd);
+            if (!rc)
+            {
+                IUResetSwitch(&CurrentMoveSP);
+                CurrentMoveS[current].s = ISS_ON;
+                CurrentMoveSP.s              = IPS_ALERT;
+                IDSetSwitch(&CurrentMoveSP, nullptr);
+                return false;
+            }
+
+            CurrentMoveSP.s = IPS_OK;
+            IDSetSwitch(&CurrentMoveSP, nullptr);
             return true;
         }
     }
@@ -482,11 +672,12 @@ void DeepSkyDadAF1::GetFocusParams()
 
     if (readAlwaysOn())
         IDSetSwitch(&AlwaysOnSP, nullptr);
-}
 
-bool DeepSkyDadAF1::SetFocuserSpeed(int speed)
-{
-    return true; //only single speed...
+    if (readCurrentMove())
+        IDSetSwitch(&CurrentMoveSP, nullptr);
+
+    if (readCurrentAo())
+        IDSetSwitch(&CurrentAoSP, nullptr);
 }
 
 IPState DeepSkyDadAF1::MoveFocuser(FocusDirection dir, int speed, uint16_t duration)
@@ -606,6 +797,8 @@ bool DeepSkyDadAF1::saveConfigItems(FILE * fp)
     IUSaveConfigSwitch(fp, &StepModeSP);
     IUSaveConfigNumber(fp, &SettleBufferNP);
     IUSaveConfigSwitch(fp, &AlwaysOnSP);
+    IUSaveConfigSwitch(fp, &CurrentMoveSP);
+    IUSaveConfigSwitch(fp, &CurrentAoSP);
 
     return true;
 }
