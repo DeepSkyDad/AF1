@@ -1,6 +1,6 @@
 /*
     Deep Sky Dad AF1
-    Based on Moonlite driver.
+    Based on Moonline driver.
     Copyright (C) 2013-2019 Jasem Mutlaq (mutlaqja@ikarustech.com)
 
     This library is free software; you can redistribute it and/or
@@ -33,7 +33,8 @@ class DeepSkyDadAF1 : public INDI::Focuser
 
         typedef enum { FULL, HALF, QUARTER, EIGHT } FocusStepMode;
 
-         typedef enum { ALWAYS_ON_NO, ALWAYS_ON_YES } AlwaysOn;
+        typedef enum { ALWAYS_ON_NO, ALWAYS_ON_YES } AlwaysOn;
+        typedef enum { CURRENT_25, CURRENT_50, CURRENT_75, CURRENT_100 } Current;
 
         const char * getDefaultName() override;
         virtual bool initProperties() override;
@@ -73,14 +74,8 @@ class DeepSkyDadAF1 : public INDI::Focuser
         */
        virtual IPState MoveRelFocuser(FocusDirection dir, uint32_t ticks) override;
 
-       /**
-        * @brief SyncFocuser Set the supplied position as the current focuser position
-        * @param ticks target position
-        * @return IPS_OK if focuser position is now set to ticks. IPS_ALERT for problems.
-        */
        virtual bool SyncFocuser(uint32_t ticks) override;
-
-       virtual bool SetFocuserSpeed(int speed) override;
+       virtual bool ReverseFocuser(bool enabled) override;
        virtual bool AbortFocuser() override;
        virtual void TimerHit() override;
        virtual bool saveConfigItems(FILE * fp) override;
@@ -101,16 +96,17 @@ class DeepSkyDadAF1 : public INDI::Focuser
         void GetFocusParams();
         bool readStepMode();
         bool readPosition();
-        bool readSpeed();
         bool readSettleBuffer();
         bool readAlwaysOn();
+        bool readCurrentMove();
+        bool readCurrentAo();
         bool isMoving();
 
         void timedMoveCallback();
 
         bool setStepMode(FocusStepMode mode);
         bool setSettleBuffer(uint32_t position);
-        bool setAlwaysOn(AlwaysOn ao);
+        bool setAlwaysOnSwitch(char * names[], int n, ISState * states);
 
         bool MoveFocuser(uint32_t position);
 
@@ -126,6 +122,14 @@ class DeepSkyDadAF1 : public INDI::Focuser
         // Always on
         ISwitch AlwaysOnS[2];
         ISwitchVectorProperty AlwaysOnSP;
+
+        //Current move
+        ISwitch CurrentMoveS[4];
+        ISwitchVectorProperty CurrentMoveSP;
+
+        //Current always on
+        ISwitch CurrentAoS[4];
+        ISwitchVectorProperty CurrentAoSP;
 
         // Settle buffer
         INumber SettleBufferN[1];
