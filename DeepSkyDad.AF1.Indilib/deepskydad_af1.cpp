@@ -175,41 +175,19 @@ const char * DeepSkyDadAF1::getDefaultName()
 
 bool DeepSkyDadAF1::Ack()
 {
-    int nbytes_written = 0, nbytes_read = 0, rc = -1;
-    char errstr[MAXRBUF];
-    char resp[5]= {0};
-
     sleep(2);
 
-    tcflush(PortFD, TCIOFLUSH);
-
-    bool transmissionSuccess = (rc = tty_write(PortFD, "[SMXP100000]", 12, &nbytes_written)) == TTY_OK;
-    if(!transmissionSuccess) {
-        tty_error_msg(rc, errstr, MAXRBUF);
-        LOG_ERROR("ACK - write getPosition failed");
+    if (!sendCommandSet("[SMXP100000]")) {
+        LOG_ERROR("ACK - write setMaxPosition failed");
+        return false;
     }
 
-    bool responseSuccess = (rc = tty_read(PortFD, resp, 4, DSD_TIMEOUT, &nbytes_read)) == TTY_OK;
-    if(!responseSuccess) {
-        tty_error_msg(rc, errstr, MAXRBUF);
-        LOG_ERROR("ACK - read setMaxPosition response failed");
+    if (!sendCommandSet("[SMXM5000]")) {
+        LOG_ERROR("ACK - write setMaxMovement failed");
+        return false;
     }
 
-    tcflush(PortFD, TCIOFLUSH);
-
-    transmissionSuccess = (rc = tty_write(PortFD, "[SMXM5000]", 10, &nbytes_written)) == TTY_OK;
-    if(!transmissionSuccess) {
-        tty_error_msg(rc, errstr, MAXRBUF);
-        LOG_ERROR("ACK - write getPosition failed");
-    }
-
-    responseSuccess = (rc = tty_read(PortFD, resp, 4, DSD_TIMEOUT, &nbytes_read)) == TTY_OK;
-    if(!responseSuccess) {
-        tty_error_msg(rc, errstr, MAXRBUF);
-        LOG_ERROR("ACK - read setMaxMovement response failed");
-    }
-
-    return transmissionSuccess && responseSuccess;
+    return true;
 }
 
 bool DeepSkyDadAF1::readStepMode()
@@ -223,9 +201,9 @@ bool DeepSkyDadAF1::readStepMode()
         StepModeS[FULL].s = ISS_ON;
     else if (strcmp(res, "(2)") == 0)
         StepModeS[HALF].s = ISS_ON;
-    else if (strcmp(res, "(3)") == 0)
-        StepModeS[QUARTER].s = ISS_ON;
     else if (strcmp(res, "(4)") == 0)
+        StepModeS[QUARTER].s = ISS_ON;
+    else if (strcmp(res, "(8)") == 0)
         StepModeS[EIGHT].s = ISS_ON;
     else
     {
@@ -288,6 +266,17 @@ bool DeepSkyDadAF1::readAlwaysOn()
         return false;
 
     if (strcmp(res, "(0)") == 0) {
+        int stepMode = IUFindOnSwitchIndex(&StepModeSP);
+        if(stepMode != 0) {
+            StepModeS[0].s = ISS_ON;
+            StepModeS[1].s = ISS_OFF;
+            StepModeS[2].s = ISS_OFF;
+            StepModeS[3].s = ISS_OFF;
+            sendCommandSet("[SSTP1]");
+            IDSetSwitch(&StepModeSP, nullptr);
+            LOG_WARN("Always on is set to NO. Switching to FULL step mode.");
+        }
+
         AlwaysOnSP.s = IPS_IDLE;
         AlwaysOnS[ALWAYS_ON_NO].s = ISS_ON;
     }
@@ -477,6 +466,19 @@ bool DeepSkyDadAF1::setAlwaysOnSwitch(char * names[], int n, ISState * states) {
         AlwaysOnSP.s = IPS_IDLE; //IDLE (gray) if off
     }
 
+    if(target_mode == ALWAYS_ON_NO){
+        int stepMode = IUFindOnSwitchIndex(&StepModeSP);
+        if(stepMode != 0) {
+            StepModeS[0].s = ISS_ON;
+            StepModeS[1].s = ISS_OFF;
+            StepModeS[2].s = ISS_OFF;
+            StepModeS[3].s = ISS_OFF;
+            sendCommandSet("[SSTP1]");
+            IDSetSwitch(&StepModeSP, nullptr);
+            LOG_WARN("Always on is set to NO. Switching to FULL step mode.");
+        }
+    }
+
     IDSetSwitch(&AlwaysOnSP, nullptr);
     return true;
 }
@@ -527,7 +529,9 @@ bool DeepSkyDadAF1::ISNewSwitch(const char * dev, const char * name, ISState * s
             if(mode != FULL) {
                 AlwaysOnS[1].s = ISS_ON;
                 AlwaysOnS[0].s = ISS_OFF;
-                return setAlwaysOnSwitch(names, n, states);
+                IDSetSwitch(&AlwaysOnSP, nullptr);
+                sendCommandSet("[SAO1]");
+                LOG_WARN("Microstepping turned on. Switching Always on to YES.");
             }
 
             return true;
@@ -829,8 +833,6 @@ bool DeepSkyDadAF1::sendCommand(const char * cmd, char * res)
         LOGF_ERROR("Serial read error: %s.", errstr);
         return false;
     }
-
-    //TODO: if response starts with '!', error code was returned...
 
     LOGF_DEBUG("RES <%s>", res);
 
