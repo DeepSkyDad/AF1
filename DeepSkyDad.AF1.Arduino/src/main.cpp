@@ -24,10 +24,13 @@
 
     version 1.1.0:
     -code optimized to reduce EEPROM wear
-    -added reverse direction optino
+    -added reverse direction option
     -added maximum position setting
     -added maximum movement setting
     -added current control (for movement and holding)
+    -revised coils control (always on, idle of or idle after a period of inactivity)
+    -reduced motor vibration
+    -optimised speed
 */
 
 #include <Arduino.h>
@@ -763,7 +766,7 @@ void loop()
         delayMicroseconds(1);
         digitalWrite(MP6500_PIN_STEP, 0);
         _eepromAfState[EEPROM_AF_STATE_POSITION]--;
-        delayMicroseconds(1500 / _eepromAfState[EEPROM_AF_STATE_STEP_MODE]);
+        delayMicroseconds(1600 / _eepromAfState[EEPROM_AF_STATE_STEP_MODE]);
       }
       else if (_motorTargetPosition > _eepromAfState[EEPROM_AF_STATE_POSITION])
       {
@@ -772,7 +775,7 @@ void loop()
         delayMicroseconds(1);
         digitalWrite(MP6500_PIN_STEP, 0);
         _eepromAfState[EEPROM_AF_STATE_POSITION]++;
-         delayMicroseconds(1500 / _eepromAfState[EEPROM_AF_STATE_STEP_MODE]);
+         delayMicroseconds(1600 / _eepromAfState[EEPROM_AF_STATE_STEP_MODE]);
       }
       else
       {
