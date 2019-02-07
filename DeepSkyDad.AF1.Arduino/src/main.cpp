@@ -6,7 +6,7 @@
     Each index contains different property, with last one containing checksum (sum of all previous values, so we can validate its contents).
     Additionally, values are saved to a different address every time. Writing to same address every time would wear EEPROM out faster.
     Autofocuseer state:
-    {<position>, <maxPosition>, <maxMovement>, <stepMode>, <isAlwaysOn>, <settleBufferMs>, <reverseDirection>, <currentMove>, <currentAo>, <checksum>}
+    {<position>, <maxPosition>, <maxMovement>, <stepMode>, <coilsMode>, <settleBufferMs>, <idleCoilsTimeoutMs>, <idleEepromWriteMs>, <reverseDirection>, <currentMove>, <currentHold>, <checksum>}
 
   COMMAND SET
     Commands are executed via serial COM port communication. 
@@ -27,10 +27,7 @@
     -added reverse direction optino
     -added maximum position setting
     -added maximum movement setting
-    -added current control (for movement and always on)
-    -always on upgrade -> auto checked, if microstepping (step size 1/2, 1/4 or 1/8)
-    
-
+    -added current control (for movement and holding)
 */
 
 #include <Arduino.h>
@@ -40,17 +37,19 @@
 #define EEPROM_AF_STATE_MAX_POSITION 1
 #define EEPROM_AF_STATE_MAX_MOVEMENT 2
 #define EEPROM_AF_STATE_STEP_MODE 3
-#define EEPROM_AF_STATE_IS_ALWAYS_ON 4
+#define EEPROM_AF_STATE_COILS_MODE 4
 #define EEPROM_AF_STATE_SETTLE_BUFFER_MS 5
-#define EEPROM_AF_STATE_REVERSE_DIRECTION 6
-#define EEPROM_AF_STATE_CURRENT_MOVE 7
-#define EEPROM_AF_STATE_CURRENT_AO 8
-#define EEPROM_AF_STATE_CHECKSUM 9
+#define EEPROM_AF_STATE_IDLE_COILS_TIMEOUT_MS 6
+#define EEPROM_AF_STATE_IDLE_EEPROM_WRITE_MS 7
+#define EEPROM_AF_STATE_REVERSE_DIRECTION 8
+#define EEPROM_AF_STATE_CURRENT_MOVE 9
+#define EEPROM_AF_STATE_CURRENT_HOLD 10
+#define EEPROM_AF_STATE_CHECKSUM 11
 
-//{<position>, <maxPosition>, <maxMovement>, <stepMode>, <isAlwaysOn>, <settleBufferMs>, <reverseDirection>, <currentMove>, <currentAo>, <checksum>}
-long _eepromAfState[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 9999};
-long _eepromAfPrevState[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 9999};
-long _eepromAfStateDefault[] = {50000, 100000, 5000, 2, 0, 0, 0, 160, 180, 0};
+//{<position>, <maxPosition>, <maxMovement>, <stepMode>, <coilsMode>, <settleBufferMs>, <idleCoilsTimeoutMs>, <idleEepromWriteMs>, <reverseDirection>, <currentMove>, <currentHold>, <checksum>}
+long _eepromAfState[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9999};
+long _eepromAfPrevState[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9999};
+long _eepromAfStateDefault[] = {50000, 100000, 5000, 1, 1, 0, 60000, 180000, 0, 140, 180, 0};
 int _eepromAfStatePropertyCount = sizeof(_eepromAfState) / sizeof(long);
 int _eepromAfStateAddressSize = sizeof(_eepromAfState);
 int _eepromAfStateAdressesCount = EEPROMSizeATmega328 / _eepromAfStateAddressSize;
@@ -64,12 +63,11 @@ bool _eepromSaveAfState;
 //motorDir limiting pin. To set specific motorDir, change PWM to specific voltage.
 //equation: CURRENT=2.2−0.63*MP6500_PIN_I1
 #define MP6500_PIN_I1 6
-#define MP6500_PIN_I1_MOVE_MIN 150
+#define MP6500_PIN_I1_MOVE_MIN 100
 #define MP6500_PIN_I1_MOVE_MAX 180
-#define MP6500_PIN_I1_AO_MIN 160
-#define MP6500_PIN_I1_AO_MAX 190
+#define MP6500_PIN_I1_HOLD_MIN 160
+#define MP6500_PIN_I1_HOLD_MAX 190
 // MS1/MS2 sets stepping mode 00 = F, 10 = 1/2, 01 = 1/4, 11 = 1/8
-// consider using only full step, since microstepping requires mandatory always on flag?
 
 #define MP6500_PIN_MS2 7
 #define MP6500_PIN_MS1 8
@@ -83,10 +81,10 @@ long _motorIsMovingLastRunMs;
 long _motorLastMoveMs;
 
 /* Serial communication */
-char _serialCommandRaw[50];
+char _serialCommandRaw[70];
 int _serialCommandRawIdx;
 char _command[5];
-char _commandParam[45];
+char _commandParam[65];
 
 const char firmwareName[] = "DeepSkyDad.AF1";
 const char firmwareVersion[] = "1.1.0";
@@ -213,30 +211,41 @@ void printResponseErrorCode(int code)
   Serial.print(")");
 }
 
-void writeAlwaysOn()
+void writeCoilsMode()
 {
   if (_motorIsMoving)
     return;
-
-  if (_eepromAfState[EEPROM_AF_STATE_IS_ALWAYS_ON] == 1)
+  
+  //Idle - off
+  if(_eepromAfState[EEPROM_AF_STATE_COILS_MODE] == 0) {
+     digitalWrite(MP6500_PIN_SLP, LOW);
+  }
+  //Always on
+  else if (_eepromAfState[EEPROM_AF_STATE_COILS_MODE] == 1)
   {
     digitalWrite(MP6500_PIN_SLP, HIGH);
-    analogWrite(MP6500_PIN_I1, _eepromAfState[EEPROM_AF_STATE_CURRENT_AO]);
+    analogWrite(MP6500_PIN_I1, _eepromAfState[EEPROM_AF_STATE_CURRENT_HOLD]);
   }
-  else
+  //Idle - coils timeout (ms)
+  else if(_eepromAfState[EEPROM_AF_STATE_COILS_MODE] == 2)
   {
-    digitalWrite(MP6500_PIN_SLP, LOW);
+    if(_motorLastMoveMs != 0L && (millis() - _motorLastMoveMs) <= (unsigned)_eepromAfState[EEPROM_AF_STATE_IDLE_COILS_TIMEOUT_MS]) {
+      digitalWrite(MP6500_PIN_SLP, HIGH);
+      analogWrite(MP6500_PIN_I1, _eepromAfState[EEPROM_AF_STATE_CURRENT_HOLD]);
+    } else {
+      digitalWrite(MP6500_PIN_SLP, LOW);
+    }
   }
 }
 
-void setAlwaysOn(char param[])
+void setCoilsMode(char param[])
 {
-  long isAlwaysOn = strtol(param, NULL, 10);
-  if (isAlwaysOn != 0 && isAlwaysOn != 1)
-    isAlwaysOn = 0;
+  long coilsMode = strtol(param, NULL, 10);
+  if (coilsMode != 0 && coilsMode != 1 && coilsMode != 2)
+    return;
 
-  _eepromAfState[EEPROM_AF_STATE_IS_ALWAYS_ON] = isAlwaysOn;
-  writeAlwaysOn();
+  _eepromAfState[EEPROM_AF_STATE_COILS_MODE] = coilsMode;
+  writeCoilsMode();
 }
 
 void stopMotor()
@@ -246,6 +255,7 @@ void stopMotor()
 
   _motorIsMoving = false;
   _motorTargetPosition = _eepromAfState[EEPROM_AF_STATE_POSITION];
+  analogWrite(MP6500_PIN_I1, _eepromAfState[EEPROM_AF_STATE_CURRENT_HOLD]);
 }
 
 void writeStepMode(int stepMode)
@@ -297,7 +307,7 @@ void setReverseDir(char param[])
 {
   long motorDir = strtol(param, NULL, 10);
   if (motorDir != 0 && motorDir != 1)
-    motorDir = 0;
+    return;
 
   _eepromAfState[EEPROM_AF_STATE_REVERSE_DIRECTION] = motorDir;
 }
@@ -337,6 +347,26 @@ void setSettleBuffer(char param[])
   _eepromAfState[EEPROM_AF_STATE_SETTLE_BUFFER_MS] = settleBufferMs;
 }
 
+void setIdleCoilsTimeoutMs(char param[]) {
+  long ms = strtol(param, NULL, 10);
+  if (ms < 0)
+  {
+    ms = 0;
+  }
+
+  _eepromAfState[EEPROM_AF_STATE_IDLE_COILS_TIMEOUT_MS] = ms;
+}
+
+void setIdleEepromWriteMs(char param[]) {
+  long ms = strtol(param, NULL, 10);
+  if (ms < 0)
+  {
+    ms = 0;
+  }
+
+  _eepromAfState[EEPROM_AF_STATE_IDLE_EEPROM_WRITE_MS] = ms;
+}
+
 void setCurrentMove(char param[])
 {
   long current = strtol(param, NULL, 10);
@@ -348,16 +378,16 @@ void setCurrentMove(char param[])
   _eepromAfState[EEPROM_AF_STATE_CURRENT_MOVE] = current;
 }
 
-void setCurrentAo(char param[])
+void setCurrentHold(char param[])
 {
   long current = strtol(param, NULL, 10);
-  if (current > MP6500_PIN_I1_AO_MAX)
-    current = MP6500_PIN_I1_AO_MAX;
-  if (current < MP6500_PIN_I1_AO_MIN)
-    current = MP6500_PIN_I1_AO_MIN;
+  if (current > MP6500_PIN_I1_HOLD_MAX)
+    current = MP6500_PIN_I1_HOLD_MAX;
+  if (current < MP6500_PIN_I1_HOLD_MIN)
+    current = MP6500_PIN_I1_HOLD_MIN;
 
-  _eepromAfState[EEPROM_AF_STATE_CURRENT_AO] = current;
-  writeAlwaysOn();
+  _eepromAfState[EEPROM_AF_STATE_CURRENT_HOLD] = current;
+  writeCoilsMode();
 }
 
 void executeCommand()
@@ -446,13 +476,19 @@ void executeCommand()
     _motorIsMoving = true;
     digitalWrite(MP6500_PIN_SLP, HIGH);
     analogWrite(MP6500_PIN_I1, _eepromAfState[EEPROM_AF_STATE_CURRENT_MOVE]);
+    /*
+      When waking up from sleep mode,
+      approximately 1ms of time must pass before a
+      STEP command can be issued to allow the
+      internal circuitry to stabilize.
+    */
+    delayMicroseconds(1000);
     _motorIsMovingLastRunMs = millis();
     _motorLastMoveMs = millis();
   }
   else if (strcmp("STOP", _command) == 0)
   {
     stopMotor();
-    writeAlwaysOn();
   }
   else if (strcmp("GMXP", _command) == 0)
   {
@@ -493,13 +529,13 @@ void executeCommand()
   {
     asm volatile("  jmp 0");
   }
-  else if (strcmp("GAON", _command) == 0)
+  else if (strcmp("GCLM", _command) == 0)
   {
-    printResponse((int)_eepromAfState[EEPROM_AF_STATE_IS_ALWAYS_ON]);
+    printResponse((int)_eepromAfState[EEPROM_AF_STATE_COILS_MODE]);
   }
-  else if (strcmp("SAON", _command) == 0)
+  else if (strcmp("SCLM", _command) == 0)
   {
-    setAlwaysOn(_commandParam);
+    setCoilsMode(_commandParam);
     _eepromSaveAfState = true;
     printSuccess();
   }
@@ -546,6 +582,26 @@ void executeCommand()
     _motorLastMoveMs = 0L;
     printSuccess();
   }
+  else if (strcmp("GIDC", _command) == 0)
+  {
+    printResponse((long)_eepromAfState[EEPROM_AF_STATE_IDLE_COILS_TIMEOUT_MS]);
+  }
+  else if (strcmp("SIDC", _command) == 0)
+  {
+    setIdleCoilsTimeoutMs(_commandParam);
+    _eepromSaveAfState = true;
+    printSuccess();
+  }
+  else if (strcmp("GIDE", _command) == 0)
+  {
+    printResponse((long)_eepromAfState[EEPROM_AF_STATE_IDLE_EEPROM_WRITE_MS]);
+  }
+  else if (strcmp("SIDE", _command) == 0)
+  {
+    setIdleEepromWriteMs(_commandParam);
+    _eepromSaveAfState = true;
+    printSuccess();
+  }
   else if (strcmp("GCMV", _command) == 0)
   {
     printResponse((int)_eepromAfState[EEPROM_AF_STATE_CURRENT_MOVE]);
@@ -556,19 +612,19 @@ void executeCommand()
     _eepromSaveAfState = true;
     printSuccess();
   }
-  else if (strcmp("GCAO", _command) == 0)
+  else if (strcmp("GCHD", _command) == 0)
   {
-    printResponse((int)_eepromAfState[EEPROM_AF_STATE_CURRENT_AO]);
+    printResponse((int)_eepromAfState[EEPROM_AF_STATE_CURRENT_HOLD]);
   }
-  else if (strcmp("SCAO", _command) == 0)
+  else if (strcmp("SCHD", _command) == 0)
   {
-    setCurrentAo(_commandParam);
+    setCurrentHold(_commandParam);
     _eepromSaveAfState = true;
     printSuccess();
   }
   else if (strcmp("CONF", _command) == 0)
   {
-    //COMMAND FORMAT: "CONF{stepMode}|{alwaysOn}|{reverseDirection}|{maxPosition}|{maxMovement}|{settleBuffer}|{currentMove}|{currentAo}";
+    //COMMAND FORMAT: "CONF{stepMode}|{coilsMode}|{reverseDirection}|{maxPosition}|{maxMovement}|{settleBuffer}|{idleCoilsTimeoutMs}|{idleEepromWriteMs}|{currentMove}|{currentHold}";
     char *param = strtok(_commandParam, "|");
     int idx = 0;
     while (param != 0)
@@ -579,7 +635,7 @@ void executeCommand()
         setStepMode(param);
         break;
       case 1:
-        setAlwaysOn(param);
+        setCoilsMode(param);
         break;
       case 2:
         setReverseDir(param);
@@ -594,10 +650,16 @@ void executeCommand()
         setSettleBuffer(param);
         break;
       case 6:
-        setCurrentMove(param);
+        setIdleCoilsTimeoutMs(param);
         break;
       case 7:
-        setCurrentAo(param);
+        setIdleEepromWriteMs(param);
+        break;
+      case 8:
+        setCurrentMove(param);
+        break;
+      case 9:
+        setCurrentHold(param);
         break;
       default:
         break;
@@ -616,8 +678,8 @@ void executeCommand()
     Serial.println(_eepromAfStateCurrentAddress);
     Serial.print("Position: ");
     Serial.println(_eepromAfState[EEPROM_AF_STATE_POSITION]);
-    Serial.print("Always on: ");
-    Serial.println(_eepromAfState[EEPROM_AF_STATE_IS_ALWAYS_ON]);
+    Serial.print("Coils mode: ");
+    Serial.println(_eepromAfState[EEPROM_AF_STATE_COILS_MODE]);
     Serial.print("Max movement: ");
     Serial.println(_eepromAfState[EEPROM_AF_STATE_MAX_MOVEMENT]);
     Serial.print("Max position: ");
@@ -628,10 +690,14 @@ void executeCommand()
     Serial.println(_eepromAfState[EEPROM_AF_STATE_STEP_MODE]);
     Serial.print("Reverse direction: ");
     Serial.println(_eepromAfState[EEPROM_AF_STATE_REVERSE_DIRECTION]);
+    Serial.print("Idle coils timeout (ms): ");
+    Serial.println(_eepromAfState[EEPROM_AF_STATE_IDLE_COILS_TIMEOUT_MS]);
+    Serial.print("Idle eeprom write ms): ");
+    Serial.println(_eepromAfState[EEPROM_AF_STATE_IDLE_EEPROM_WRITE_MS]);
     Serial.print("Move current: ");
     Serial.println(_eepromAfState[EEPROM_AF_STATE_CURRENT_MOVE]);
-    Serial.print("Always on current: ");
-    Serial.println(_eepromAfState[EEPROM_AF_STATE_CURRENT_AO]);
+    Serial.print("Hold current: ");
+    Serial.println(_eepromAfState[EEPROM_AF_STATE_CURRENT_HOLD]);
   }
   else
   {
@@ -676,7 +742,7 @@ void setup()
   digitalWrite(MP6500_PIN_ENABLE, LOW);
   analogWrite(MP6500_PIN_I1, 255);
   writeStepMode(_eepromAfState[EEPROM_AF_STATE_STEP_MODE]);
-  writeAlwaysOn();
+  writeCoilsMode();
 
   _motorTargetPosition = _eepromAfState[EEPROM_AF_STATE_POSITION];
   _motorSettleBufferPrevMs = 0L;
@@ -697,7 +763,7 @@ void loop()
         delayMicroseconds(1);
         digitalWrite(MP6500_PIN_STEP, 0);
         _eepromAfState[EEPROM_AF_STATE_POSITION]--;
-        delay(2);
+        delayMicroseconds(1500 / _eepromAfState[EEPROM_AF_STATE_STEP_MODE]);
       }
       else if (_motorTargetPosition > _eepromAfState[EEPROM_AF_STATE_POSITION])
       {
@@ -706,12 +772,12 @@ void loop()
         delayMicroseconds(1);
         digitalWrite(MP6500_PIN_STEP, 0);
         _eepromAfState[EEPROM_AF_STATE_POSITION]++;
-        delay(2);
+         delayMicroseconds(1500 / _eepromAfState[EEPROM_AF_STATE_STEP_MODE]);
       }
       else
       {
         stopMotor();
-        writeAlwaysOn();
+        writeCoilsMode();
       }
     }
 
@@ -719,8 +785,12 @@ void loop()
   }
   else
   {
-    //save eeprom 5min after last movement (prevent EEPROM wear with write after each move)
-    if(_motorLastMoveMs != 0L && (millis() - _motorLastMoveMs) > 300000) {
+    if(_motorLastMoveMs != 0L && _eepromAfState[EEPROM_AF_STATE_COILS_MODE] == 2 && (millis() - _motorLastMoveMs) > (unsigned)_eepromAfState[EEPROM_AF_STATE_IDLE_COILS_TIMEOUT_MS]) {
+       writeCoilsMode();
+    }
+    
+    //save eeprom 3min after last movement (prevent EEPROM wear with write after each move)
+    if(_motorLastMoveMs != 0L && (millis() - _motorLastMoveMs) > (unsigned)_eepromAfState[EEPROM_AF_STATE_IDLE_EEPROM_WRITE_MS]) {
       _eepromSaveAfState = true;
       _motorLastMoveMs = 0L;
     }
@@ -741,14 +811,14 @@ void serialEvent()
     if (c == '[')
     {
       _serialCommandRawIdx = 0;
-      memset(_serialCommandRaw, 0, 50);
+      memset(_serialCommandRaw, 0, 70);
     }
     else if (c == ']')
     {
 
       int len = strlen(_serialCommandRaw);
       memset(_command, 0, 5);
-      memset(_commandParam, 0, 45);
+      memset(_commandParam, 0, 65);
 
       if (len >= 4)
       {

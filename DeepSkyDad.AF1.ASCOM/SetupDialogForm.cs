@@ -14,6 +14,7 @@ namespace ASCOM.DeepSkyDad.AF1
     public partial class SetupDialogForm : Form
     {
         private Focuser _f;
+        private bool _suppressWarningMessageBox = true;
 
         public SetupDialogForm(Focuser f)
         {
@@ -36,11 +37,12 @@ namespace ASCOM.DeepSkyDad.AF1
             Focuser.setPositonOnConnect = chkSetPositionOnConnect.Checked;
             if(Focuser.setPositonOnConnect)
                 Focuser.setPositionOnConnectValue = (int)numericSetPositionOnConnectValue.Value;
-            Focuser.alwaysOn = chkAlwaysOn.Checked;
+            Focuser.coilsMode = (string)coilsModeCombo.SelectedItem;
+            Focuser.idleCoilsTimeout = (int)idleCoilsTimeoutNumeric.Value;
             Focuser.reverseDirection = chkReverseDirection.Checked;
             Focuser.settleBuffer = (int)numericUpDownSettleBuffer.Value;
             Focuser.currentMove = (string)currentMoveComboBox.SelectedItem;
-            Focuser.currentAo = (string)currentAoComboBox.SelectedItem;
+            Focuser.currentHold = (string)currentHoldComboBox.SelectedItem;
         }
 
         private void cmdCancel_Click(object sender, EventArgs e) // Cancel button event handler
@@ -67,12 +69,9 @@ namespace ASCOM.DeepSkyDad.AF1
 
         private void InitUI()
         {
-            ToolTip tt = new ToolTip();
-            tt.AutoPopDelay = 5000;
-            tt.InitialDelay = 1000;
-            tt.ReshowDelay = 500;
-            tt.SetToolTip(alwaysOnLabel, "Can only be turned off for step size 1. With microstep precision focusing, coils must be powered at all times.");
+            this.Size = new Size(this.Size.Width - advancedPanel.Width, this.Height);
 
+            _suppressWarningMessageBox = true;
             chkTrace.Checked = Focuser.traceState;
             numericUpMaxPosition.Value = Focuser.maxPosition;
             numericUpMaxMovement.Value = Focuser.maxMovement;
@@ -81,8 +80,8 @@ namespace ASCOM.DeepSkyDad.AF1
             chkSetPositionOnConnect.Checked = Focuser.setPositonOnConnect;
             numericSetPositionOnConnectValue.Value = Focuser.setPositionOnConnectValue;
             numericSetPositionOnConnectValue.Visible = Focuser.setPositonOnConnect;
-            chkAlwaysOn.Checked = Focuser.alwaysOn;
-            chkAlwaysOn.Enabled = Focuser.stepSize == "1";
+            coilsModeCombo.Text = Focuser.coilsMode;
+            idleCoilsTimeoutNumeric.Value = Focuser.idleCoilsTimeout;
             chkReverseDirection.Checked = Focuser.reverseDirection;
             numericUpDownSettleBuffer.Value = Focuser.settleBuffer;
             // set the list of com ports to those that are currently available
@@ -94,7 +93,9 @@ namespace ASCOM.DeepSkyDad.AF1
                 comboBoxComPort.SelectedItem = Focuser.comPort;
             }
             currentMoveComboBox.Text = Focuser.currentMove;
-            currentAoComboBox.Text = Focuser.currentAo;
+            currentHoldComboBox.Text = Focuser.currentHold;
+            idleCoilsTimeoutNumeric.Enabled = Focuser.coilsMode == "Idle - coils timeout (ms)";
+            _suppressWarningMessageBox = false;
         }
 
         private void label3_Click(object sender, EventArgs e)
@@ -177,18 +178,6 @@ namespace ASCOM.DeepSkyDad.AF1
             numericSetPositionOnConnectValue.Visible = chkSetPositionOnConnect.Checked;
         }
 
-        private void comboBoxStepSize_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            if(comboBoxStepSize.Text != "1")
-            {
-                chkAlwaysOn.Enabled = false;
-                chkAlwaysOn.Checked = true;
-            } else
-            {
-                chkAlwaysOn.Enabled = true;
-            }
-        }
-
         private void buttonReboot_Click(object sender, EventArgs e)
         {
             var comPort = (string)comboBoxComPort.SelectedItem;
@@ -215,6 +204,50 @@ namespace ASCOM.DeepSkyDad.AF1
             }
 
             MessageBox.Show("Reboot successful!");
+        }
+
+        private void showAdvancedBtn_Click(object sender, EventArgs e)
+        {
+            if(this.advancedPanel.Visible)
+            {
+                this.showAdvancedBtn.Text = "Advanced >>";
+                this.advancedPanel.Visible = false;
+                this.Size = new Size(this.Width - this.advancedPanel.Width, this.Height);
+            } else
+            {
+                this.showAdvancedBtn.Text = "Advanced <<";
+                this.advancedPanel.Visible = true;
+                this.Size = new Size(this.Size.Width + advancedPanel.Width, this.Height);
+               
+            }
+        }
+
+        private void coilsModeCombo_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if(coilsModeCombo.Text != "Always on")
+            {
+                if(!_suppressWarningMessageBox)
+                {
+                    var confirmResult = MessageBox.Show("Selecting this mode will cause the coils to be turned off when motor is not running. This causes motor to loose its position. Are you sure you want to choose this option?",
+                                   "Warning",
+                                   MessageBoxButtons.YesNo);
+                    if (confirmResult == DialogResult.Yes)
+                    {
+                        idleCoilsTimeoutNumeric.Enabled = coilsModeCombo.Text == "Idle - coils timeout (ms)";
+                    }
+                    else
+                    {
+                        coilsModeCombo.SelectedIndex = 0;
+                        idleCoilsTimeoutNumeric.Enabled = false;
+                    }
+                } else
+                {
+                    idleCoilsTimeoutNumeric.Enabled = coilsModeCombo.Text == "Idle - coils timeout (ms)";
+                }
+            } else
+            {
+                idleCoilsTimeoutNumeric.Enabled = false;
+            }
         }
     }
 }

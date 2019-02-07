@@ -90,16 +90,18 @@ namespace ASCOM.DeepSkyDad.AF1
         internal static string setPositonOnConnectDefault = "false";
         internal static string setPositonOnConnectValueProfileName = "Set position on connect value";
         internal static string setPositonOnConnectValueDefault = "50000";
-        internal static string alwaysOnProfileName = "Always on";
-        internal static string alwaysOnDefault = "true";
+        internal static string coilsModeProfileName = "Coils mode";
+        internal static string coilsModeDefault = "Always on";
+        internal static string idleCoilsTimeoutProfileName = "Idle - coils timeout (ms)";
+        internal static string idleCoilsTimeoutDefault = "60000";
         internal static string settleBufferProfileName = "Settle buffer";
         internal static string settleBufferDefault = "0";
         internal static string reverseDirectionProfileName = "Reverse direction";
         internal static string reverseDirectionDefault = "false";
         internal static string currentMoveProfileName = "Current - move";
         internal static string currentMoveDefault = "75%";
-        internal static string currentAoProfileName = "Current - always on";
-        internal static string currentAoDefault = "50%";
+        internal static string currentHoldProfileName = "Current - hold";
+        internal static string currentHoldDefault = "50%";
 
         internal static string comPort; // Variables to hold the currrent device configuration
         internal static int maxPosition;
@@ -109,11 +111,12 @@ namespace ASCOM.DeepSkyDad.AF1
         internal static bool resetOnConnect;
         internal static bool setPositonOnConnect;
         internal static int setPositionOnConnectValue;
-        internal static bool alwaysOn;
+        internal static string coilsMode;
+        internal static int idleCoilsTimeout;
         internal static int settleBuffer;
         internal static bool reverseDirection;
         internal static string currentMove;
-        internal static string currentAo;
+        internal static string currentHold;
         internal static int commandTimeout = 2000;
 
         internal static int? maxIncrement = null;
@@ -348,53 +351,56 @@ namespace ASCOM.DeepSkyDad.AF1
                         ss = 8;
                     }
 
-                    if(!alwaysOn && ss != 1)
-                    {
-                        using (Profile driverProfile = new Profile())
-                        {
-                            alwaysOn = true;
-                            driverProfile.DeviceType = "Focuser";
-                            driverProfile.WriteValue(driverID, alwaysOnProfileName, alwaysOn.ToString());
-                        }
-                    }
-
-                    var currentMoveInt = 160;
-                    var currentAoInt = 170;
+                    var currentMoveInt = 140;
 
                     switch(currentMove)
                     {
                         case "25%":
-                            currentMoveInt = 180;
-                            break;
-                        case "50%":
-                            currentMoveInt = 170;
-                            break;
-                        case "75%":
                             currentMoveInt = 160;
                             break;
-                        case "100%":
-                            currentMoveInt = 150;
-                            break;
-                    }
-
-                    switch (currentAo)
-                    {
-                        case "25%":
-                            currentAoInt = 190;
-                            break;
                         case "50%":
-                            currentAoInt = 180;
+                            currentMoveInt = 140;
                             break;
                         case "75%":
-                            currentAoInt = 170;
+                            currentMoveInt = 120;
                             break;
                         case "100%":
-                            currentAoInt = 160;
+                            currentMoveInt = 100;
                             break;
                     }
 
-                    CommandString($"CONF{ss}|{(alwaysOn ? 1 : 0)}|{(reverseDirection ? 1 : 0)}|{maxPosition}|{maxMovement}|{settleBuffer}|{currentMoveInt}|{currentAoInt}");
-                    //CommandString($"SAON{(alwaysOn ? 1 : 0)}");
+                    int currentHoldInt = 180;
+                    switch (currentHold)
+                    {
+                        case "25%":
+                            currentHoldInt = 190;
+                            break;
+                        case "50%":
+                            currentHoldInt = 180;
+                            break;
+                        case "75%":
+                            currentHoldInt = 170;
+                            break;
+                        case "100%":
+                            currentHoldInt = 160;
+                            break;
+                    }
+
+                    var coilsModeInt = 1;
+                    switch(coilsMode)
+                    {
+                        case "Idle - off":
+                            coilsModeInt = 0;
+                            break;
+                        case "Always on":
+                            coilsModeInt = 1;
+                            break;
+                        case "Idle - coils timeout (ms)":
+                            coilsModeInt = 2;
+                            break;
+                    }
+
+                    CommandString($"CONF{ss}|{coilsModeInt}|{(reverseDirection ? 1 : 0)}|{maxPosition}|{maxMovement}|{settleBuffer}|{idleCoilsTimeout}|180000|{currentMoveInt}|{currentHoldInt}");
                     //CommandString($"SREV{(reverseDirection ? 1 : 0)}");
                     //CommandString($"SMXP{maxPosition}");
                     //CommandString($"SMXM{maxMovement}");
@@ -403,7 +409,7 @@ namespace ASCOM.DeepSkyDad.AF1
                 }
                 else
                 {
-                    CommandString($"SAON0");
+                    CommandString($"SCLM0");
                     Thread.Sleep(100);
 
                     Disconnect();
@@ -716,11 +722,12 @@ namespace ASCOM.DeepSkyDad.AF1
                 resetOnConnect = Convert.ToBoolean(driverProfile.GetValue(driverID, resetOnConnectProfileName, string.Empty, resetOnConnectDefault));
                 setPositonOnConnect = Convert.ToBoolean(driverProfile.GetValue(driverID, setPositonOnConnectProfileName, string.Empty, setPositonOnConnectDefault));
                 setPositionOnConnectValue = Convert.ToInt32(driverProfile.GetValue(driverID, setPositonOnConnectValueProfileName, string.Empty, setPositonOnConnectValueDefault)); ;
-                alwaysOn = Convert.ToBoolean(driverProfile.GetValue(driverID, alwaysOnProfileName, string.Empty, alwaysOnDefault));
+                coilsMode = driverProfile.GetValue(driverID, coilsModeProfileName, string.Empty, coilsModeDefault);
+                idleCoilsTimeout = Convert.ToInt32(driverProfile.GetValue(driverID, idleCoilsTimeoutProfileName, string.Empty, idleCoilsTimeoutDefault));
                 reverseDirection = Convert.ToBoolean(driverProfile.GetValue(driverID, reverseDirectionProfileName, string.Empty, reverseDirectionDefault));
                 settleBuffer = Convert.ToInt32(driverProfile.GetValue(driverID, settleBufferProfileName, string.Empty, settleBufferDefault));
                 currentMove = driverProfile.GetValue(driverID, currentMoveProfileName, string.Empty, currentMoveDefault);
-                currentAo = driverProfile.GetValue(driverID, currentAoProfileName, string.Empty, currentAoDefault);
+                currentHold = driverProfile.GetValue(driverID, currentHoldProfileName, string.Empty, currentHoldDefault);
             }
         }
 
@@ -740,11 +747,12 @@ namespace ASCOM.DeepSkyDad.AF1
                 driverProfile.WriteValue(driverID, resetOnConnectProfileName, resetOnConnect.ToString());
                 driverProfile.WriteValue(driverID, setPositonOnConnectProfileName, setPositonOnConnect.ToString());
                 driverProfile.WriteValue(driverID, setPositonOnConnectValueProfileName, setPositionOnConnectValue.ToString());
-                driverProfile.WriteValue(driverID, alwaysOnProfileName, alwaysOn.ToString());
+                driverProfile.WriteValue(driverID, coilsModeProfileName, coilsMode.ToString());
+                driverProfile.WriteValue(driverID, idleCoilsTimeoutProfileName, idleCoilsTimeout.ToString());
                 driverProfile.WriteValue(driverID, settleBufferProfileName, settleBuffer.ToString());
                 driverProfile.WriteValue(driverID, reverseDirectionProfileName, reverseDirection.ToString());
                 driverProfile.WriteValue(driverID, currentMoveProfileName, currentMove);
-                driverProfile.WriteValue(driverID, currentAoProfileName, currentAo);
+                driverProfile.WriteValue(driverID, currentHoldProfileName, currentHold);
             }
         }
 

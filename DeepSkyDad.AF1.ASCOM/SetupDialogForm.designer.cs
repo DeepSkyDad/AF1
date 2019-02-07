@@ -38,7 +38,6 @@ namespace ASCOM.DeepSkyDad.AF1
             this.chkResetOnConnect = new System.Windows.Forms.CheckBox();
             this.label3 = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
-            this.chkAlwaysOn = new System.Windows.Forms.CheckBox();
             this.numericUpDownSettleBuffer = new System.Windows.Forms.NumericUpDown();
             this.label4 = new System.Windows.Forms.Label();
             this.buttonFirmwareInfo = new System.Windows.Forms.Button();
@@ -50,24 +49,33 @@ namespace ASCOM.DeepSkyDad.AF1
             this.label11 = new System.Windows.Forms.Label();
             this.chkSetPositionOnConnect = new System.Windows.Forms.CheckBox();
             this.numericSetPositionOnConnectValue = new System.Windows.Forms.NumericUpDown();
-            this.alwaysOnLabel = new System.Windows.Forms.Label();
             this.buttonReboot = new System.Windows.Forms.Button();
             this.label7 = new System.Windows.Forms.Label();
             this.currentMoveComboBox = new System.Windows.Forms.ComboBox();
             this.label8 = new System.Windows.Forms.Label();
-            this.currentAoComboBox = new System.Windows.Forms.ComboBox();
+            this.currentHoldComboBox = new System.Windows.Forms.ComboBox();
+            this.advancedPanel = new System.Windows.Forms.Panel();
+            this.label10 = new System.Windows.Forms.Label();
+            this.label14 = new System.Windows.Forms.Label();
+            this.label13 = new System.Windows.Forms.Label();
+            this.label12 = new System.Windows.Forms.Label();
+            this.coilsModeCombo = new System.Windows.Forms.ComboBox();
+            this.idleCoilsTimeoutNumeric = new System.Windows.Forms.NumericUpDown();
+            this.label9 = new System.Windows.Forms.Label();
+            this.showAdvancedBtn = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.picASCOM)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownSettleBuffer)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpMaxPosition)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpMaxMovement)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericSetPositionOnConnectValue)).BeginInit();
+            this.advancedPanel.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.idleCoilsTimeoutNumeric)).BeginInit();
             this.SuspendLayout();
             // 
             // cmdOK
             // 
-            this.cmdOK.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.cmdOK.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.cmdOK.Location = new System.Drawing.Point(474, 324);
+            this.cmdOK.Location = new System.Drawing.Point(12, 245);
             this.cmdOK.Name = "cmdOK";
             this.cmdOK.Size = new System.Drawing.Size(59, 24);
             this.cmdOK.TabIndex = 0;
@@ -77,9 +85,8 @@ namespace ASCOM.DeepSkyDad.AF1
             // 
             // cmdCancel
             // 
-            this.cmdCancel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.cmdCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.cmdCancel.Location = new System.Drawing.Point(541, 323);
+            this.cmdCancel.Location = new System.Drawing.Point(77, 244);
             this.cmdCancel.Name = "cmdCancel";
             this.cmdCancel.Size = new System.Drawing.Size(59, 25);
             this.cmdCancel.TabIndex = 1;
@@ -92,7 +99,7 @@ namespace ASCOM.DeepSkyDad.AF1
             this.picASCOM.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.picASCOM.Cursor = System.Windows.Forms.Cursors.Hand;
             this.picASCOM.Image = global::ASCOM.DeepSkyDad.AF1.Properties.Resources.ASCOM;
-            this.picASCOM.Location = new System.Drawing.Point(552, 9);
+            this.picASCOM.Location = new System.Drawing.Point(887, 9);
             this.picASCOM.Name = "picASCOM";
             this.picASCOM.Size = new System.Drawing.Size(48, 56);
             this.picASCOM.SizeMode = System.Windows.Forms.PictureBoxSizeMode.AutoSize;
@@ -113,7 +120,7 @@ namespace ASCOM.DeepSkyDad.AF1
             // chkTrace
             // 
             this.chkTrace.AutoSize = true;
-            this.chkTrace.Location = new System.Drawing.Point(18, 291);
+            this.chkTrace.Location = new System.Drawing.Point(18, 99);
             this.chkTrace.Name = "chkTrace";
             this.chkTrace.Size = new System.Drawing.Size(69, 17);
             this.chkTrace.TabIndex = 6;
@@ -137,16 +144,15 @@ namespace ASCOM.DeepSkyDad.AF1
             "1/2",
             "1/4",
             "1/8"});
-            this.comboBoxStepSize.Location = new System.Drawing.Point(161, 75);
+            this.comboBoxStepSize.Location = new System.Drawing.Point(175, 42);
             this.comboBoxStepSize.Name = "comboBoxStepSize";
             this.comboBoxStepSize.Size = new System.Drawing.Size(121, 21);
             this.comboBoxStepSize.TabIndex = 8;
-            this.comboBoxStepSize.SelectedIndexChanged += new System.EventHandler(this.comboBoxStepSize_SelectedIndexChanged);
             // 
             // chkResetOnConnect
             // 
             this.chkResetOnConnect.AutoSize = true;
-            this.chkResetOnConnect.Location = new System.Drawing.Point(312, 50);
+            this.chkResetOnConnect.Location = new System.Drawing.Point(32, 217);
             this.chkResetOnConnect.Name = "chkResetOnConnect";
             this.chkResetOnConnect.Size = new System.Drawing.Size(93, 17);
             this.chkResetOnConnect.TabIndex = 9;
@@ -157,7 +163,7 @@ namespace ASCOM.DeepSkyDad.AF1
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(15, 79);
+            this.label3.Location = new System.Drawing.Point(29, 46);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(50, 13);
             this.label3.TabIndex = 10;
@@ -175,19 +181,9 @@ namespace ASCOM.DeepSkyDad.AF1
             this.label1.Text = "General settings";
             this.label1.Click += new System.EventHandler(this.label1_Click);
             // 
-            // chkAlwaysOn
-            // 
-            this.chkAlwaysOn.AutoSize = true;
-            this.chkAlwaysOn.Location = new System.Drawing.Point(18, 245);
-            this.chkAlwaysOn.Name = "chkAlwaysOn";
-            this.chkAlwaysOn.Size = new System.Drawing.Size(15, 14);
-            this.chkAlwaysOn.TabIndex = 15;
-            this.chkAlwaysOn.UseVisualStyleBackColor = true;
-            this.chkAlwaysOn.CheckedChanged += new System.EventHandler(this.chkAlwaysOn_CheckedChanged);
-            // 
             // numericUpDownSettleBuffer
             // 
-            this.numericUpDownSettleBuffer.Location = new System.Drawing.Point(162, 102);
+            this.numericUpDownSettleBuffer.Location = new System.Drawing.Point(176, 69);
             this.numericUpDownSettleBuffer.Maximum = new decimal(new int[] {
             5000,
             0,
@@ -200,7 +196,7 @@ namespace ASCOM.DeepSkyDad.AF1
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(14, 104);
+            this.label4.Location = new System.Drawing.Point(28, 71);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(138, 13);
             this.label4.TabIndex = 17;
@@ -209,7 +205,7 @@ namespace ASCOM.DeepSkyDad.AF1
             // buttonFirmwareInfo
             // 
             this.buttonFirmwareInfo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.buttonFirmwareInfo.Location = new System.Drawing.Point(25, 324);
+            this.buttonFirmwareInfo.Location = new System.Drawing.Point(334, 243);
             this.buttonFirmwareInfo.Name = "buttonFirmwareInfo";
             this.buttonFirmwareInfo.Size = new System.Drawing.Size(97, 24);
             this.buttonFirmwareInfo.TabIndex = 18;
@@ -220,7 +216,7 @@ namespace ASCOM.DeepSkyDad.AF1
             // chkReverseDirection
             // 
             this.chkReverseDirection.AutoSize = true;
-            this.chkReverseDirection.Location = new System.Drawing.Point(18, 268);
+            this.chkReverseDirection.Location = new System.Drawing.Point(18, 76);
             this.chkReverseDirection.Name = "chkReverseDirection";
             this.chkReverseDirection.Size = new System.Drawing.Size(109, 17);
             this.chkReverseDirection.TabIndex = 20;
@@ -230,7 +226,7 @@ namespace ASCOM.DeepSkyDad.AF1
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(14, 130);
+            this.label5.Location = new System.Drawing.Point(28, 97);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(90, 13);
             this.label5.TabIndex = 22;
@@ -238,7 +234,7 @@ namespace ASCOM.DeepSkyDad.AF1
             // 
             // numericUpMaxPosition
             // 
-            this.numericUpMaxPosition.Location = new System.Drawing.Point(162, 128);
+            this.numericUpMaxPosition.Location = new System.Drawing.Point(176, 95);
             this.numericUpMaxPosition.Maximum = new decimal(new int[] {
             1000000,
             0,
@@ -261,7 +257,7 @@ namespace ASCOM.DeepSkyDad.AF1
             // label6
             // 
             this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(14, 156);
+            this.label6.Location = new System.Drawing.Point(28, 123);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(103, 13);
             this.label6.TabIndex = 24;
@@ -269,7 +265,7 @@ namespace ASCOM.DeepSkyDad.AF1
             // 
             // numericUpMaxMovement
             // 
-            this.numericUpMaxMovement.Location = new System.Drawing.Point(162, 154);
+            this.numericUpMaxMovement.Location = new System.Drawing.Point(176, 121);
             this.numericUpMaxMovement.Maximum = new decimal(new int[] {
             50000,
             0,
@@ -293,7 +289,7 @@ namespace ASCOM.DeepSkyDad.AF1
             // 
             this.label11.AutoSize = true;
             this.label11.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label11.Location = new System.Drawing.Point(308, 9);
+            this.label11.Location = new System.Drawing.Point(22, 176);
             this.label11.Name = "label11";
             this.label11.Size = new System.Drawing.Size(165, 24);
             this.label11.TabIndex = 31;
@@ -302,7 +298,7 @@ namespace ASCOM.DeepSkyDad.AF1
             // chkSetPositionOnConnect
             // 
             this.chkSetPositionOnConnect.AutoSize = true;
-            this.chkSetPositionOnConnect.Location = new System.Drawing.Point(312, 78);
+            this.chkSetPositionOnConnect.Location = new System.Drawing.Point(32, 247);
             this.chkSetPositionOnConnect.Name = "chkSetPositionOnConnect";
             this.chkSetPositionOnConnect.Size = new System.Drawing.Size(81, 17);
             this.chkSetPositionOnConnect.TabIndex = 32;
@@ -312,7 +308,7 @@ namespace ASCOM.DeepSkyDad.AF1
             // 
             // numericSetPositionOnConnectValue
             // 
-            this.numericSetPositionOnConnectValue.Location = new System.Drawing.Point(414, 76);
+            this.numericSetPositionOnConnectValue.Location = new System.Drawing.Point(175, 246);
             this.numericSetPositionOnConnectValue.Maximum = new decimal(new int[] {
             1000000,
             0,
@@ -324,7 +320,7 @@ namespace ASCOM.DeepSkyDad.AF1
             0,
             0});
             this.numericSetPositionOnConnectValue.Name = "numericSetPositionOnConnectValue";
-            this.numericSetPositionOnConnectValue.Size = new System.Drawing.Size(120, 20);
+            this.numericSetPositionOnConnectValue.Size = new System.Drawing.Size(121, 20);
             this.numericSetPositionOnConnectValue.TabIndex = 33;
             this.numericSetPositionOnConnectValue.Value = new decimal(new int[] {
             100000,
@@ -333,19 +329,10 @@ namespace ASCOM.DeepSkyDad.AF1
             0});
             this.numericSetPositionOnConnectValue.Visible = false;
             // 
-            // alwaysOnLabel
-            // 
-            this.alwaysOnLabel.AutoSize = true;
-            this.alwaysOnLabel.Location = new System.Drawing.Point(35, 245);
-            this.alwaysOnLabel.Name = "alwaysOnLabel";
-            this.alwaysOnLabel.Size = new System.Drawing.Size(163, 13);
-            this.alwaysOnLabel.TabIndex = 34;
-            this.alwaysOnLabel.Text = "Always on (useful for focuser slip)";
-            // 
             // buttonReboot
             // 
             this.buttonReboot.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.buttonReboot.Location = new System.Drawing.Point(127, 324);
+            this.buttonReboot.Location = new System.Drawing.Point(334, 213);
             this.buttonReboot.Name = "buttonReboot";
             this.buttonReboot.Size = new System.Drawing.Size(97, 24);
             this.buttonReboot.TabIndex = 35;
@@ -356,11 +343,11 @@ namespace ASCOM.DeepSkyDad.AF1
             // label7
             // 
             this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(15, 184);
+            this.label7.Location = new System.Drawing.Point(331, 100);
             this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(76, 13);
+            this.label7.Size = new System.Drawing.Size(79, 13);
             this.label7.TabIndex = 37;
-            this.label7.Text = "Current - move";
+            this.label7.Text = "Current - move:";
             // 
             // currentMoveComboBox
             // 
@@ -370,60 +357,168 @@ namespace ASCOM.DeepSkyDad.AF1
             "50%",
             "75%",
             "100%"});
-            this.currentMoveComboBox.Location = new System.Drawing.Point(161, 180);
+            this.currentMoveComboBox.Location = new System.Drawing.Point(442, 97);
             this.currentMoveComboBox.Name = "currentMoveComboBox";
-            this.currentMoveComboBox.Size = new System.Drawing.Size(121, 21);
+            this.currentMoveComboBox.Size = new System.Drawing.Size(116, 21);
             this.currentMoveComboBox.TabIndex = 36;
             // 
             // label8
             // 
             this.label8.AutoSize = true;
-            this.label8.Location = new System.Drawing.Point(15, 211);
+            this.label8.Location = new System.Drawing.Point(331, 127);
             this.label8.Name = "label8";
-            this.label8.Size = new System.Drawing.Size(97, 13);
+            this.label8.Size = new System.Drawing.Size(73, 13);
             this.label8.TabIndex = 39;
-            this.label8.Text = "Current - always on";
+            this.label8.Text = "Current - hold:";
             // 
-            // currentAoComboBox
+            // currentHoldComboBox
             // 
-            this.currentAoComboBox.FormattingEnabled = true;
-            this.currentAoComboBox.Items.AddRange(new object[] {
+            this.currentHoldComboBox.FormattingEnabled = true;
+            this.currentHoldComboBox.Items.AddRange(new object[] {
             "25%",
             "50%",
             "75%",
             "100%"});
-            this.currentAoComboBox.Location = new System.Drawing.Point(161, 207);
-            this.currentAoComboBox.Name = "currentAoComboBox";
-            this.currentAoComboBox.Size = new System.Drawing.Size(121, 21);
-            this.currentAoComboBox.TabIndex = 38;
+            this.currentHoldComboBox.Location = new System.Drawing.Point(442, 123);
+            this.currentHoldComboBox.Name = "currentHoldComboBox";
+            this.currentHoldComboBox.Size = new System.Drawing.Size(116, 21);
+            this.currentHoldComboBox.TabIndex = 38;
+            // 
+            // advancedPanel
+            // 
+            this.advancedPanel.Controls.Add(this.label10);
+            this.advancedPanel.Controls.Add(this.label14);
+            this.advancedPanel.Controls.Add(this.label13);
+            this.advancedPanel.Controls.Add(this.buttonReboot);
+            this.advancedPanel.Controls.Add(this.buttonFirmwareInfo);
+            this.advancedPanel.Controls.Add(this.label12);
+            this.advancedPanel.Controls.Add(this.label6);
+            this.advancedPanel.Controls.Add(this.label8);
+            this.advancedPanel.Controls.Add(this.numericUpMaxMovement);
+            this.advancedPanel.Controls.Add(this.label5);
+            this.advancedPanel.Controls.Add(this.currentHoldComboBox);
+            this.advancedPanel.Controls.Add(this.numericUpMaxPosition);
+            this.advancedPanel.Controls.Add(this.coilsModeCombo);
+            this.advancedPanel.Controls.Add(this.label7);
+            this.advancedPanel.Controls.Add(this.idleCoilsTimeoutNumeric);
+            this.advancedPanel.Controls.Add(this.label4);
+            this.advancedPanel.Controls.Add(this.currentMoveComboBox);
+            this.advancedPanel.Controls.Add(this.numericUpDownSettleBuffer);
+            this.advancedPanel.Controls.Add(this.label9);
+            this.advancedPanel.Controls.Add(this.label3);
+            this.advancedPanel.Controls.Add(this.numericSetPositionOnConnectValue);
+            this.advancedPanel.Controls.Add(this.comboBoxStepSize);
+            this.advancedPanel.Controls.Add(this.chkResetOnConnect);
+            this.advancedPanel.Controls.Add(this.label11);
+            this.advancedPanel.Controls.Add(this.chkSetPositionOnConnect);
+            this.advancedPanel.Location = new System.Drawing.Point(312, 2);
+            this.advancedPanel.Name = "advancedPanel";
+            this.advancedPanel.Size = new System.Drawing.Size(560, 270);
+            this.advancedPanel.TabIndex = 40;
+            this.advancedPanel.Visible = false;
+            // 
+            // label10
+            // 
+            this.label10.AutoSize = true;
+            this.label10.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label10.Location = new System.Drawing.Point(319, 176);
+            this.label10.Name = "label10";
+            this.label10.Size = new System.Drawing.Size(77, 24);
+            this.label10.TabIndex = 47;
+            this.label10.Text = "System";
+            // 
+            // label14
+            // 
+            this.label14.AutoSize = true;
+            this.label14.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label14.Location = new System.Drawing.Point(22, 10);
+            this.label14.Name = "label14";
+            this.label14.Size = new System.Drawing.Size(107, 24);
+            this.label14.TabIndex = 46;
+            this.label14.Text = "Movement";
+            // 
+            // label13
+            // 
+            this.label13.AutoSize = true;
+            this.label13.Location = new System.Drawing.Point(331, 45);
+            this.label13.Name = "label13";
+            this.label13.Size = new System.Drawing.Size(61, 13);
+            this.label13.TabIndex = 45;
+            this.label13.Text = "Coils mode:";
+            // 
+            // label12
+            // 
+            this.label12.AutoSize = true;
+            this.label12.Location = new System.Drawing.Point(331, 71);
+            this.label12.Name = "label12";
+            this.label12.Size = new System.Drawing.Size(110, 13);
+            this.label12.TabIndex = 43;
+            this.label12.Text = "Idle coils timeout (ms):";
+            // 
+            // coilsModeCombo
+            // 
+            this.coilsModeCombo.FormattingEnabled = true;
+            this.coilsModeCombo.Items.AddRange(new object[] {
+            "Always on",
+            "Idle - off",
+            "Idle - coils timeout (ms)"});
+            this.coilsModeCombo.Location = new System.Drawing.Point(442, 43);
+            this.coilsModeCombo.Name = "coilsModeCombo";
+            this.coilsModeCombo.Size = new System.Drawing.Size(116, 21);
+            this.coilsModeCombo.TabIndex = 44;
+            this.coilsModeCombo.SelectedIndexChanged += new System.EventHandler(this.coilsModeCombo_SelectedIndexChanged);
+            // 
+            // idleCoilsTimeoutNumeric
+            // 
+            this.idleCoilsTimeoutNumeric.Location = new System.Drawing.Point(442, 71);
+            this.idleCoilsTimeoutNumeric.Maximum = new decimal(new int[] {
+            999999,
+            0,
+            0,
+            0});
+            this.idleCoilsTimeoutNumeric.Minimum = new decimal(new int[] {
+            1000,
+            0,
+            0,
+            0});
+            this.idleCoilsTimeoutNumeric.Name = "idleCoilsTimeoutNumeric";
+            this.idleCoilsTimeoutNumeric.Size = new System.Drawing.Size(116, 20);
+            this.idleCoilsTimeoutNumeric.TabIndex = 42;
+            this.idleCoilsTimeoutNumeric.Value = new decimal(new int[] {
+            60000,
+            0,
+            0,
+            0});
+            // 
+            // label9
+            // 
+            this.label9.AutoSize = true;
+            this.label9.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label9.Location = new System.Drawing.Point(319, 9);
+            this.label9.Name = "label9";
+            this.label9.Size = new System.Drawing.Size(126, 24);
+            this.label9.TabIndex = 34;
+            this.label9.Text = "Coils control";
+            // 
+            // showAdvancedBtn
+            // 
+            this.showAdvancedBtn.Location = new System.Drawing.Point(142, 244);
+            this.showAdvancedBtn.Name = "showAdvancedBtn";
+            this.showAdvancedBtn.Size = new System.Drawing.Size(79, 25);
+            this.showAdvancedBtn.TabIndex = 41;
+            this.showAdvancedBtn.Text = "Advanced >>";
+            this.showAdvancedBtn.UseVisualStyleBackColor = true;
+            this.showAdvancedBtn.Click += new System.EventHandler(this.showAdvancedBtn_Click);
             // 
             // SetupDialogForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(610, 360);
-            this.Controls.Add(this.label8);
-            this.Controls.Add(this.currentAoComboBox);
-            this.Controls.Add(this.label7);
-            this.Controls.Add(this.currentMoveComboBox);
-            this.Controls.Add(this.buttonReboot);
-            this.Controls.Add(this.alwaysOnLabel);
-            this.Controls.Add(this.numericSetPositionOnConnectValue);
-            this.Controls.Add(this.chkSetPositionOnConnect);
-            this.Controls.Add(this.label11);
-            this.Controls.Add(this.label6);
-            this.Controls.Add(this.numericUpMaxMovement);
-            this.Controls.Add(this.label5);
-            this.Controls.Add(this.numericUpMaxPosition);
+            this.ClientSize = new System.Drawing.Size(945, 284);
+            this.Controls.Add(this.showAdvancedBtn);
+            this.Controls.Add(this.advancedPanel);
             this.Controls.Add(this.chkReverseDirection);
-            this.Controls.Add(this.buttonFirmwareInfo);
-            this.Controls.Add(this.label4);
-            this.Controls.Add(this.numericUpDownSettleBuffer);
-            this.Controls.Add(this.chkAlwaysOn);
             this.Controls.Add(this.label1);
-            this.Controls.Add(this.label3);
-            this.Controls.Add(this.chkResetOnConnect);
-            this.Controls.Add(this.comboBoxStepSize);
             this.Controls.Add(this.comboBoxComPort);
             this.Controls.Add(this.chkTrace);
             this.Controls.Add(this.label2);
@@ -442,6 +537,9 @@ namespace ASCOM.DeepSkyDad.AF1
             ((System.ComponentModel.ISupportInitialize)(this.numericUpMaxPosition)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpMaxMovement)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericSetPositionOnConnectValue)).EndInit();
+            this.advancedPanel.ResumeLayout(false);
+            this.advancedPanel.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.idleCoilsTimeoutNumeric)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -459,7 +557,6 @@ namespace ASCOM.DeepSkyDad.AF1
         private System.Windows.Forms.CheckBox chkResetOnConnect;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.CheckBox chkAlwaysOn;
         private System.Windows.Forms.NumericUpDown numericUpDownSettleBuffer;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.Button buttonFirmwareInfo;
@@ -471,11 +568,19 @@ namespace ASCOM.DeepSkyDad.AF1
         private System.Windows.Forms.Label label11;
         private System.Windows.Forms.CheckBox chkSetPositionOnConnect;
         private System.Windows.Forms.NumericUpDown numericSetPositionOnConnectValue;
-        private System.Windows.Forms.Label alwaysOnLabel;
         private System.Windows.Forms.Button buttonReboot;
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.ComboBox currentMoveComboBox;
         private System.Windows.Forms.Label label8;
-        private System.Windows.Forms.ComboBox currentAoComboBox;
+        private System.Windows.Forms.ComboBox currentHoldComboBox;
+        private System.Windows.Forms.Panel advancedPanel;
+        private System.Windows.Forms.Label label13;
+        private System.Windows.Forms.Label label12;
+        private System.Windows.Forms.ComboBox coilsModeCombo;
+        private System.Windows.Forms.NumericUpDown idleCoilsTimeoutNumeric;
+        private System.Windows.Forms.Label label9;
+        private System.Windows.Forms.Button showAdvancedBtn;
+        private System.Windows.Forms.Label label14;
+        private System.Windows.Forms.Label label10;
     }
 }
