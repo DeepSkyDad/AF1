@@ -1,5 +1,5 @@
 /*
-  Deep Sky Dad AF1 firmware, 25.11.2018
+  Deep Sky Dad AF1 firmware
   
   EEPROM IMPLEMENTATION
     Autofocuser state is stored in EEPROM long[] array, using EEPROMEx library.
@@ -21,8 +21,9 @@
     The actual set of required commands is based on ASCOM IFocuserV3 interface, for more check:
     https://ascom-standards.org/Help/Platform/html/T_ASCOM_DeviceInterface_IFocuserV3.htm
 
+    version 1.0.0 - 25.11.2018
 
-    version 1.1.0:
+    version 1.1.0 - xx.xx.2019
     -code optimized to reduce EEPROM wear
     -added reverse direction option
     -added maximum position setting
