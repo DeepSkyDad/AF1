@@ -705,7 +705,7 @@ namespace ASCOM.DeepSkyDad.AF1
             {
                 driverProfile.DeviceType = "Focuser";
                 driverProfile.WriteValue(driverID, traceStateProfileName, traceState.ToString());
-                driverProfile.WriteValue(driverID, comPortProfileName, comPort.ToString());
+                driverProfile.WriteValue(driverID, comPortProfileName, comPort);
                 driverProfile.WriteValue(driverID, stepSizeProfileName, stepSize);
                 driverProfile.WriteValue(driverID, maxPositionProfileName, maxPosition.ToString());
                 driverProfile.WriteValue(driverID, maxMovementProfileName, maxMovement.ToString());

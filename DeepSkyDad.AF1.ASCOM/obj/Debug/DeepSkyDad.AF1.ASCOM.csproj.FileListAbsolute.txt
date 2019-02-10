@@ -25,3 +25,4 @@ D:\Projects\DeepSkyDad.AF1\DeepSkyDad.AF1.ASCOM\obj\Debug\DeepSkyDad.AF1.ASCOM.c
 D:\Projects\DeepSkyDad.AF1\DeepSkyDad.AF1.ASCOM\obj\Debug\DeepSkyDad.AF1.ASCOM.csproj.CopyComplete
 D:\Projects\DeepSkyDad.AF1\DeepSkyDad.AF1.ASCOM\obj\Debug\ASCOM.DeepSkyDad.AF1.Focuser.dll
 D:\Projects\DeepSkyDad.AF1\DeepSkyDad.AF1.ASCOM\obj\Debug\ASCOM.DeepSkyDad.AF1.Focuser.pdb
+D:\Projects\DeepSkyDad.AF1\DeepSkyDad.AF1.ASCOM\obj\Debug\DeepSkyDad.AF1.ASCOM.csprojAssemblyReference.cache

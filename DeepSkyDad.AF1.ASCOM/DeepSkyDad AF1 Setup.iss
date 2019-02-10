@@ -4,20 +4,20 @@
 ;
 [Setup]
 AppID={{10cc53ba-ec1f-4cca-8e95-62aa97be4f96}
-AppName=ASCOM DSD AF1
-AppVerName=ASCOM DSD AF1 1.0.1
-AppVersion=1.0.1
+AppName=ASCOM DSD AF1 v1.1.0
+AppVerName=ASCOM DSD AF1 v1.1.0
+AppVersion=1.1.0
 AppPublisher=Pavle Gartner <pavle.gartner@gmail.com>
 AppPublisherURL=mailto:pavle.gartner@gmail.com
 AppSupportURL=http://tech.groups.yahoo.com/group/ASCOM-Talk/
 AppUpdatesURL=http://ascom-standards.org/
-VersionInfoVersion=1.0.1
+VersionInfoVersion=1.1.0
 MinVersion=0,5.0.2195sp4
 DefaultDirName="{cf}\ASCOM\Focuser"
 DisableDirPage=yes
 DisableProgramGroupPage=yes
 OutputDir="."
-OutputBaseFilename="ASCOM DSD AF1 Setup"
+OutputBaseFilename="ASCOM DSD AF1 Setup v1.1.0"
 Compression=lzma
 SolidCompression=yes
 ; Put there by Platform if Driver Installer Support selected

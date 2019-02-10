@@ -22,7 +22,7 @@
 
     version 1.0.0 - 25.11.2018
 
-    version 1.1.0 - xx.xx.2019
+    version 1.1.0 - 10.2.2019
     -code optimized to reduce EEPROM wear
     -added reverse direction option
     -added maximum position setting
