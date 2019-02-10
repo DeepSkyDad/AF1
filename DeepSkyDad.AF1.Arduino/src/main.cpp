@@ -53,7 +53,7 @@
 //{<position>, <maxPosition>, <maxMovement>, <stepMode>, <coilsMode>, <settleBufferMs>, <idleCoilsTimeoutMs>, <idleEepromWriteMs>, <reverseDirection>, <currentMove>, <currentHold>, <checksum>}
 long _eepromAfState[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9999};
 long _eepromAfPrevState[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9999};
-long _eepromAfStateDefault[] = {50000, 100000, 5000, 1, 1, 0, 60000, 180000, 0, 140, 180, 0};
+long _eepromAfStateDefault[] = {50000, 100000, 5000, 2, 1, 0, 60000, 180000, 0, 140, 180, 0};
 int _eepromAfStatePropertyCount = sizeof(_eepromAfState) / sizeof(long);
 int _eepromAfStateAddressSize = sizeof(_eepromAfState);
 int _eepromAfStateAdressesCount = EEPROMSizeATmega328 / _eepromAfStateAddressSize;
@@ -69,8 +69,10 @@ bool _eepromSaveAfState;
 #define MP6500_PIN_I1 6
 #define MP6500_PIN_I1_MOVE_MIN 100
 #define MP6500_PIN_I1_MOVE_MAX 180
+long MP6500_PIN_I1_MOVE_RANGE = MP6500_PIN_I1_MOVE_MAX - MP6500_PIN_I1_MOVE_MIN;
 #define MP6500_PIN_I1_HOLD_MIN 160
-#define MP6500_PIN_I1_HOLD_MAX 190
+#define MP6500_PIN_I1_HOLD_MAX 200
+long MP6500_PIN_I1_HOLD_RANGE = MP6500_PIN_I1_HOLD_MAX - MP6500_PIN_I1_HOLD_MIN;
 // MS1/MS2 sets stepping mode 00 = F, 10 = 1/2, 01 = 1/4, 11 = 1/8
 
 #define MP6500_PIN_MS2 7
@@ -87,8 +89,10 @@ long _motorLastMoveMs;
 /* Serial communication */
 char _serialCommandRaw[70];
 int _serialCommandRawIdx;
+int _serialCommandRawLength;
 char _command[5];
 char _commandParam[65];
+int _commandParamLength;
 
 const char firmwareName[] = "DeepSkyDad.AF1";
 const char firmwareVersion[] = "1.1.0";
@@ -382,6 +386,29 @@ void setCurrentMove(char param[])
   _eepromAfState[EEPROM_AF_STATE_CURRENT_MOVE] = current;
 }
 
+void setCurrentMovePercent(char param[])
+{
+  int length = strlen(param) - 1;
+  char _percentValue[length];
+  strncpy(_percentValue, param, length);
+  float percent = atof(_percentValue) / 100.0;
+
+  long current =  MP6500_PIN_I1_MOVE_MAX - MP6500_PIN_I1_MOVE_RANGE * percent;
+  _eepromAfState[EEPROM_AF_STATE_CURRENT_MOVE] = current;
+}
+
+void setCurrentHoldPercent(char param[])
+{
+  int length = strlen(param) - 1;
+  char _percentValue[length];
+  strncpy(_percentValue, param, length);
+  float percent = atof(_percentValue) / 100.0;
+
+  long current =  MP6500_PIN_I1_HOLD_MAX - MP6500_PIN_I1_HOLD_RANGE * percent;
+  _eepromAfState[EEPROM_AF_STATE_CURRENT_HOLD] = current;
+  writeCoilsMode();
+}
+
 void setCurrentHold(char param[])
 {
   long current = strtol(param, NULL, 10);
@@ -608,21 +635,45 @@ void executeCommand()
   }
   else if (strcmp("GCMV", _command) == 0)
   {
-    printResponse((int)_eepromAfState[EEPROM_AF_STATE_CURRENT_MOVE]);
+    if(_commandParam[0] == '%') {
+      int percent = ((float)MP6500_PIN_I1_MOVE_MAX - (float)_eepromAfState[EEPROM_AF_STATE_CURRENT_MOVE]) / (float)MP6500_PIN_I1_MOVE_RANGE * 100;
+      char buffer[4];
+      sprintf(buffer, "%d%%", percent);
+      printResponse(buffer);
+    } else {
+      printResponse((int)_eepromAfState[EEPROM_AF_STATE_CURRENT_MOVE]);
+    }
   }
   else if (strcmp("SCMV", _command) == 0)
   {
-    setCurrentMove(_commandParam);
+    if(_commandParam[_commandParamLength - 1] == '%') {
+      setCurrentMovePercent(_commandParam);
+    } else {
+       setCurrentMove(_commandParam);
+    }
+   
     _eepromSaveAfState = true;
     printSuccess();
   }
   else if (strcmp("GCHD", _command) == 0)
   {
-    printResponse((int)_eepromAfState[EEPROM_AF_STATE_CURRENT_HOLD]);
+     if(_commandParam[0] == '%') {
+      int percent = ((float)MP6500_PIN_I1_HOLD_MAX - (float)_eepromAfState[EEPROM_AF_STATE_CURRENT_HOLD]) / (float)MP6500_PIN_I1_HOLD_RANGE * 100;
+      char buffer[4];
+      sprintf(buffer, "%d%%", percent);
+      printResponse(buffer);
+    } else {
+     printResponse((int)_eepromAfState[EEPROM_AF_STATE_CURRENT_HOLD]);
+    }
   }
   else if (strcmp("SCHD", _command) == 0)
   {
-    setCurrentHold(_commandParam);
+     if(_commandParam[_commandParamLength - 1] == '%') {
+      setCurrentHoldPercent(_commandParam);
+    } else {
+       setCurrentHold(_commandParam);
+    }
+   
     _eepromSaveAfState = true;
     printSuccess();
   }
@@ -660,10 +711,10 @@ void executeCommand()
         setIdleEepromWriteMs(param);
         break;
       case 8:
-        setCurrentMove(param);
+        setCurrentMovePercent(param);
         break;
       case 9:
-        setCurrentHold(param);
+        setCurrentHoldPercent(param);
         break;
       default:
         break;
@@ -820,17 +871,19 @@ void serialEvent()
     else if (c == ']')
     {
 
-      int len = strlen(_serialCommandRaw);
+      _serialCommandRawLength = strlen(_serialCommandRaw);
+      _commandParamLength = 0;
       memset(_command, 0, 5);
       memset(_commandParam, 0, 65);
 
-      if (len >= 4)
+      if (_serialCommandRawLength >= 4)
       {
         strncpy(_command, _serialCommandRaw, 4);
       }
-      if (len > 4)
+      if (_serialCommandRawLength > 4)
       {
-        strncpy(_commandParam, _serialCommandRaw + 4, len - 4);
+        _commandParamLength = _serialCommandRawLength - 4;
+        strncpy(_commandParam, _serialCommandRaw + 4, _commandParamLength);
       }
 
       executeCommand();

@@ -351,41 +351,6 @@ namespace ASCOM.DeepSkyDad.AF1
                         ss = 8;
                     }
 
-                    var currentMoveInt = 140;
-
-                    switch(currentMove)
-                    {
-                        case "25%":
-                            currentMoveInt = 160;
-                            break;
-                        case "50%":
-                            currentMoveInt = 140;
-                            break;
-                        case "75%":
-                            currentMoveInt = 120;
-                            break;
-                        case "100%":
-                            currentMoveInt = 100;
-                            break;
-                    }
-
-                    int currentHoldInt = 180;
-                    switch (currentHold)
-                    {
-                        case "25%":
-                            currentHoldInt = 190;
-                            break;
-                        case "50%":
-                            currentHoldInt = 180;
-                            break;
-                        case "75%":
-                            currentHoldInt = 170;
-                            break;
-                        case "100%":
-                            currentHoldInt = 160;
-                            break;
-                    }
-
                     var coilsModeInt = 1;
                     switch(coilsMode)
                     {
@@ -400,7 +365,7 @@ namespace ASCOM.DeepSkyDad.AF1
                             break;
                     }
 
-                    CommandString($"CONF{ss}|{coilsModeInt}|{(reverseDirection ? 1 : 0)}|{maxPosition}|{maxMovement}|{settleBuffer}|{idleCoilsTimeout}|180000|{currentMoveInt}|{currentHoldInt}");
+                    CommandString($"CONF{ss}|{coilsModeInt}|{(reverseDirection ? 1 : 0)}|{maxPosition}|{maxMovement}|{settleBuffer}|{idleCoilsTimeout}|180000|{currentMove}|{currentHold}");
                     //CommandString($"SREV{(reverseDirection ? 1 : 0)}");
                     //CommandString($"SMXP{maxPosition}");
                     //CommandString($"SMXM{maxMovement}");
