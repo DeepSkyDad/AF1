@@ -17,7 +17,6 @@
     If command results in error, response starts with ! and ends with ), containing error code. List of error codes:
       100 - command not found
       101 - relative movement bigger from max. movement
-      102 - target position below zero or larger from maximum position
     The actual set of required commands is based on ASCOM IFocuserV3 interface, for more check:
     https://ascom-standards.org/Help/Platform/html/T_ASCOM_DeviceInterface_IFocuserV3.htm
 
@@ -84,7 +83,8 @@ bool _motorIsMoving;
 long _motorTargetPosition;
 long _motorSettleBufferPrevMs;
 long _motorIsMovingLastRunMs;
-long _motorLastMoveMs;
+long _motorLastMoveCoilsMs;
+long _motorLastMoveEepromMs;
 
 /* Serial communication */
 char _serialCommandRaw[70];
@@ -123,6 +123,7 @@ void eepromGetAddress()
 void eepromWrite(bool forceWrite)
 {
   _eepromSaveAfState = false;
+  _motorLastMoveEepromMs = 0L;
 
   //prevent unneccessary saves
   if (!forceWrite)
@@ -223,10 +224,11 @@ void writeCoilsMode()
 {
   if (_motorIsMoving)
     return;
-  
+
   //Idle - off
-  if(_eepromAfState[EEPROM_AF_STATE_COILS_MODE] == 0) {
-     digitalWrite(MP6500_PIN_SLP, LOW);
+  if (_eepromAfState[EEPROM_AF_STATE_COILS_MODE] == 0)
+  {
+    digitalWrite(MP6500_PIN_SLP, LOW);
   }
   //Always on
   else if (_eepromAfState[EEPROM_AF_STATE_COILS_MODE] == 1)
@@ -235,12 +237,23 @@ void writeCoilsMode()
     analogWrite(MP6500_PIN_I1, _eepromAfState[EEPROM_AF_STATE_CURRENT_HOLD]);
   }
   //Idle - coils timeout (ms)
-  else if(_eepromAfState[EEPROM_AF_STATE_COILS_MODE] == 2)
+  else if (_eepromAfState[EEPROM_AF_STATE_COILS_MODE] == 2)
   {
-    if(_motorLastMoveMs != 0L && (millis() - _motorLastMoveMs) <= (unsigned)_eepromAfState[EEPROM_AF_STATE_IDLE_COILS_TIMEOUT_MS]) {
-      digitalWrite(MP6500_PIN_SLP, HIGH);
-      analogWrite(MP6500_PIN_I1, _eepromAfState[EEPROM_AF_STATE_CURRENT_HOLD]);
-    } else {
+    if (_motorLastMoveCoilsMs != 0L)
+    {
+      if ((millis() - _motorLastMoveCoilsMs) > (unsigned)_eepromAfState[EEPROM_AF_STATE_IDLE_COILS_TIMEOUT_MS])
+      {
+        digitalWrite(MP6500_PIN_SLP, LOW);
+        _motorLastMoveCoilsMs = 0L;
+      }
+      else
+      {
+        digitalWrite(MP6500_PIN_SLP, HIGH);
+        analogWrite(MP6500_PIN_I1, _eepromAfState[EEPROM_AF_STATE_CURRENT_HOLD]);
+      }
+    }
+    else
+    {
       digitalWrite(MP6500_PIN_SLP, LOW);
     }
   }
@@ -260,6 +273,8 @@ void stopMotor()
 {
   if (_motorIsMoving && _eepromAfState[EEPROM_AF_STATE_SETTLE_BUFFER_MS] > 0)
     _motorSettleBufferPrevMs = millis();
+  _motorLastMoveCoilsMs = millis();
+  _motorLastMoveEepromMs = millis();
 
   _motorIsMoving = false;
   _motorTargetPosition = _eepromAfState[EEPROM_AF_STATE_POSITION];
@@ -355,7 +370,8 @@ void setSettleBuffer(char param[])
   _eepromAfState[EEPROM_AF_STATE_SETTLE_BUFFER_MS] = settleBufferMs;
 }
 
-void setIdleCoilsTimeoutMs(char param[]) {
+void setIdleCoilsTimeoutMs(char param[])
+{
   long ms = strtol(param, NULL, 10);
   if (ms < 0)
   {
@@ -365,7 +381,8 @@ void setIdleCoilsTimeoutMs(char param[]) {
   _eepromAfState[EEPROM_AF_STATE_IDLE_COILS_TIMEOUT_MS] = ms;
 }
 
-void setIdleEepromWriteMs(char param[]) {
+void setIdleEepromWriteMs(char param[])
+{
   long ms = strtol(param, NULL, 10);
   if (ms < 0)
   {
@@ -393,7 +410,7 @@ void setCurrentMovePercent(char param[])
   strncpy(_percentValue, param, length);
   float percent = atof(_percentValue) / 100.0;
 
-  long current =  MP6500_PIN_I1_MOVE_MAX - MP6500_PIN_I1_MOVE_RANGE * percent;
+  long current = MP6500_PIN_I1_MOVE_MAX - MP6500_PIN_I1_MOVE_RANGE * percent;
   _eepromAfState[EEPROM_AF_STATE_CURRENT_MOVE] = current;
 }
 
@@ -404,7 +421,7 @@ void setCurrentHoldPercent(char param[])
   strncpy(_percentValue, param, length);
   float percent = atof(_percentValue) / 100.0;
 
-  long current =  MP6500_PIN_I1_HOLD_MAX - MP6500_PIN_I1_HOLD_RANGE * percent;
+  long current = MP6500_PIN_I1_HOLD_MAX - MP6500_PIN_I1_HOLD_RANGE * percent;
   _eepromAfState[EEPROM_AF_STATE_CURRENT_HOLD] = current;
   writeCoilsMode();
 }
@@ -453,9 +470,13 @@ void executeCommand()
     {
       printResponseErrorCode(101);
     }
-    else if (pos < 0 || pos > _eepromAfState[EEPROM_AF_STATE_MAX_POSITION])
+    else if (pos < 0)
     {
-      printResponseErrorCode(102);
+      pos = 0;
+    }
+    else if (pos > _eepromAfState[EEPROM_AF_STATE_MAX_POSITION])
+    {
+      pos = _eepromAfState[EEPROM_AF_STATE_MAX_POSITION];
     }
     else
     {
@@ -515,11 +536,11 @@ void executeCommand()
     */
     delayMicroseconds(1000);
     _motorIsMovingLastRunMs = millis();
-    _motorLastMoveMs = millis();
   }
   else if (strcmp("STOP", _command) == 0)
   {
     stopMotor();
+    writeCoilsMode();
   }
   else if (strcmp("GMXP", _command) == 0)
   {
@@ -610,7 +631,6 @@ void executeCommand()
     _eepromAfState[EEPROM_AF_STATE_POSITION] = newPosition;
     _motorTargetPosition = newPosition;
     _eepromSaveAfState = true;
-    _motorLastMoveMs = 0L;
     printSuccess();
   }
   else if (strcmp("GIDC", _command) == 0)
@@ -635,45 +655,57 @@ void executeCommand()
   }
   else if (strcmp("GCMV", _command) == 0)
   {
-    if(_commandParam[0] == '%') {
+    if (_commandParam[0] == '%')
+    {
       int percent = ((float)MP6500_PIN_I1_MOVE_MAX - (float)_eepromAfState[EEPROM_AF_STATE_CURRENT_MOVE]) / (float)MP6500_PIN_I1_MOVE_RANGE * 100;
       char buffer[4];
       sprintf(buffer, "%d%%", percent);
       printResponse(buffer);
-    } else {
+    }
+    else
+    {
       printResponse((int)_eepromAfState[EEPROM_AF_STATE_CURRENT_MOVE]);
     }
   }
   else if (strcmp("SCMV", _command) == 0)
   {
-    if(_commandParam[_commandParamLength - 1] == '%') {
+    if (_commandParam[_commandParamLength - 1] == '%')
+    {
       setCurrentMovePercent(_commandParam);
-    } else {
-       setCurrentMove(_commandParam);
     }
-   
+    else
+    {
+      setCurrentMove(_commandParam);
+    }
+
     _eepromSaveAfState = true;
     printSuccess();
   }
   else if (strcmp("GCHD", _command) == 0)
   {
-     if(_commandParam[0] == '%') {
+    if (_commandParam[0] == '%')
+    {
       int percent = ((float)MP6500_PIN_I1_HOLD_MAX - (float)_eepromAfState[EEPROM_AF_STATE_CURRENT_HOLD]) / (float)MP6500_PIN_I1_HOLD_RANGE * 100;
       char buffer[4];
       sprintf(buffer, "%d%%", percent);
       printResponse(buffer);
-    } else {
-     printResponse((int)_eepromAfState[EEPROM_AF_STATE_CURRENT_HOLD]);
+    }
+    else
+    {
+      printResponse((int)_eepromAfState[EEPROM_AF_STATE_CURRENT_HOLD]);
     }
   }
   else if (strcmp("SCHD", _command) == 0)
   {
-     if(_commandParam[_commandParamLength - 1] == '%') {
+    if (_commandParam[_commandParamLength - 1] == '%')
+    {
       setCurrentHoldPercent(_commandParam);
-    } else {
-       setCurrentHold(_commandParam);
     }
-   
+    else
+    {
+      setCurrentHold(_commandParam);
+    }
+
     _eepromSaveAfState = true;
     printSuccess();
   }
@@ -801,7 +833,8 @@ void setup()
 
   _motorTargetPosition = _eepromAfState[EEPROM_AF_STATE_POSITION];
   _motorSettleBufferPrevMs = 0L;
-  _motorLastMoveMs = 0L;
+  _motorLastMoveCoilsMs = 0L;
+  _motorLastMoveEepromMs = 0L;
 }
 
 void loop()
@@ -827,7 +860,7 @@ void loop()
         delayMicroseconds(1);
         digitalWrite(MP6500_PIN_STEP, 0);
         _eepromAfState[EEPROM_AF_STATE_POSITION]++;
-         delayMicroseconds(1600 / _eepromAfState[EEPROM_AF_STATE_STEP_MODE]);
+        delayMicroseconds(1600 / _eepromAfState[EEPROM_AF_STATE_STEP_MODE]);
       }
       else
       {
@@ -840,14 +873,15 @@ void loop()
   }
   else
   {
-    if(_motorLastMoveMs != 0L && _eepromAfState[EEPROM_AF_STATE_COILS_MODE] == 2 && (millis() - _motorLastMoveMs) > (unsigned)_eepromAfState[EEPROM_AF_STATE_IDLE_COILS_TIMEOUT_MS]) {
-       writeCoilsMode();
+    if (_motorLastMoveCoilsMs != 0L && _eepromAfState[EEPROM_AF_STATE_COILS_MODE] == 2 && (millis() - _motorLastMoveCoilsMs) > (unsigned)_eepromAfState[EEPROM_AF_STATE_IDLE_COILS_TIMEOUT_MS])
+    {
+      writeCoilsMode();
     }
-    
-    //save eeprom 3min after last movement (prevent EEPROM wear with write after each move)
-    if(_motorLastMoveMs != 0L && (millis() - _motorLastMoveMs) > (unsigned)_eepromAfState[EEPROM_AF_STATE_IDLE_EEPROM_WRITE_MS]) {
+
+    //save eeprom only after period of time from last movement (prevent EEPROM wear with write after each move)
+    if (_motorLastMoveEepromMs != 0L && (millis() - _motorLastMoveEepromMs) > (unsigned)_eepromAfState[EEPROM_AF_STATE_IDLE_EEPROM_WRITE_MS])
+    {
       _eepromSaveAfState = true;
-      _motorLastMoveMs = 0L;
     }
 
     if (_eepromSaveAfState)
