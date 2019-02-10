@@ -1,1 +1,2 @@
-C++ source for deep sky dad AF1 driver -> Has to be compiled as a part of indilib (indilib/libindi/drivers/focuser)
+Indilib driver is a part of separate repository:
+https://github.com/DeepSkyDad/indi/blob/master/libindi/drivers/focuser/deepskydad_af1.cpp
