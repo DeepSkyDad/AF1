@@ -63,6 +63,8 @@ namespace ASCOM.DeepSkyDad.AF1
             this.idleCoilsTimeoutNumeric = new System.Windows.Forms.NumericUpDown();
             this.label9 = new System.Windows.Forms.Label();
             this.showAdvancedBtn = new System.Windows.Forms.Button();
+            this.label15 = new System.Windows.Forms.Label();
+            this.comboBoxSpeedMode = new System.Windows.Forms.ComboBox();
             ((System.ComponentModel.ISupportInitialize)(this.picASCOM)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownSettleBuffer)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpMaxPosition)).BeginInit();
@@ -183,7 +185,7 @@ namespace ASCOM.DeepSkyDad.AF1
             // 
             // numericUpDownSettleBuffer
             // 
-            this.numericUpDownSettleBuffer.Location = new System.Drawing.Point(176, 69);
+            this.numericUpDownSettleBuffer.Location = new System.Drawing.Point(177, 95);
             this.numericUpDownSettleBuffer.Maximum = new decimal(new int[] {
             5000,
             0,
@@ -196,7 +198,7 @@ namespace ASCOM.DeepSkyDad.AF1
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(28, 71);
+            this.label4.Location = new System.Drawing.Point(29, 97);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(138, 13);
             this.label4.TabIndex = 17;
@@ -226,7 +228,7 @@ namespace ASCOM.DeepSkyDad.AF1
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(28, 97);
+            this.label5.Location = new System.Drawing.Point(29, 123);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(90, 13);
             this.label5.TabIndex = 22;
@@ -234,7 +236,7 @@ namespace ASCOM.DeepSkyDad.AF1
             // 
             // numericUpMaxPosition
             // 
-            this.numericUpMaxPosition.Location = new System.Drawing.Point(176, 95);
+            this.numericUpMaxPosition.Location = new System.Drawing.Point(177, 121);
             this.numericUpMaxPosition.Maximum = new decimal(new int[] {
             1000000,
             0,
@@ -257,7 +259,7 @@ namespace ASCOM.DeepSkyDad.AF1
             // label6
             // 
             this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(28, 123);
+            this.label6.Location = new System.Drawing.Point(29, 149);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(103, 13);
             this.label6.TabIndex = 24;
@@ -265,7 +267,7 @@ namespace ASCOM.DeepSkyDad.AF1
             // 
             // numericUpMaxMovement
             // 
-            this.numericUpMaxMovement.Location = new System.Drawing.Point(176, 121);
+            this.numericUpMaxMovement.Location = new System.Drawing.Point(177, 147);
             this.numericUpMaxMovement.Maximum = new decimal(new int[] {
             50000,
             0,
@@ -386,6 +388,8 @@ namespace ASCOM.DeepSkyDad.AF1
             // 
             // advancedPanel
             // 
+            this.advancedPanel.Controls.Add(this.label15);
+            this.advancedPanel.Controls.Add(this.comboBoxSpeedMode);
             this.advancedPanel.Controls.Add(this.label10);
             this.advancedPanel.Controls.Add(this.label14);
             this.advancedPanel.Controls.Add(this.label13);
@@ -510,6 +514,27 @@ namespace ASCOM.DeepSkyDad.AF1
             this.showAdvancedBtn.UseVisualStyleBackColor = true;
             this.showAdvancedBtn.Click += new System.EventHandler(this.showAdvancedBtn_Click);
             // 
+            // label15
+            // 
+            this.label15.AutoSize = true;
+            this.label15.Location = new System.Drawing.Point(29, 72);
+            this.label15.Name = "label15";
+            this.label15.Size = new System.Drawing.Size(67, 13);
+            this.label15.TabIndex = 49;
+            this.label15.Text = "Speed mode";
+            // 
+            // comboBoxSpeedMode
+            // 
+            this.comboBoxSpeedMode.FormattingEnabled = true;
+            this.comboBoxSpeedMode.Items.AddRange(new object[] {
+            "Low",
+            "Medium",
+            "High"});
+            this.comboBoxSpeedMode.Location = new System.Drawing.Point(175, 68);
+            this.comboBoxSpeedMode.Name = "comboBoxSpeedMode";
+            this.comboBoxSpeedMode.Size = new System.Drawing.Size(121, 21);
+            this.comboBoxSpeedMode.TabIndex = 48;
+            // 
             // SetupDialogForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -582,5 +607,7 @@ namespace ASCOM.DeepSkyDad.AF1
         private System.Windows.Forms.Button showAdvancedBtn;
         private System.Windows.Forms.Label label14;
         private System.Windows.Forms.Label label10;
+        private System.Windows.Forms.Label label15;
+        private System.Windows.Forms.ComboBox comboBoxSpeedMode;
     }
 }

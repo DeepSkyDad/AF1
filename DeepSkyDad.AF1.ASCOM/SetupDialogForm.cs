@@ -32,6 +32,7 @@ namespace ASCOM.DeepSkyDad.AF1
             Focuser.maxPosition = (int)numericUpMaxPosition.Value;
             Focuser.maxMovement = (int)numericUpMaxMovement.Value;
             Focuser.stepSize = (string)comboBoxStepSize.SelectedItem;
+            Focuser.speedMode = (string)comboBoxSpeedMode.SelectedItem;
             Focuser.traceState = chkTrace.Checked;
             Focuser.resetOnConnect = chkResetOnConnect.Checked;
             Focuser.setPositonOnConnect = chkSetPositionOnConnect.Checked;
@@ -76,6 +77,7 @@ namespace ASCOM.DeepSkyDad.AF1
             numericUpMaxPosition.Value = Focuser.maxPosition;
             numericUpMaxMovement.Value = Focuser.maxMovement;
             comboBoxStepSize.Text = Focuser.stepSize;
+            comboBoxSpeedMode.Text = Focuser.speedMode;
             chkResetOnConnect.Checked = Focuser.resetOnConnect;
             chkSetPositionOnConnect.Checked = Focuser.setPositonOnConnect;
             numericSetPositionOnConnectValue.Value = Focuser.setPositionOnConnectValue;
@@ -137,28 +139,13 @@ namespace ASCOM.DeepSkyDad.AF1
                 return;
             }
 
-            if (_f.Connected)
-            {
-                var firmwareVersion = _f.CommandString("GSFR");
-                ShowNonBlockingMessageBox($"v{firmwareVersion}", "Firmware version");
-                return;
-            }
-
             try
             {
-                Focuser.comPort = comPort;
-                _f.Connected = true;
-                var firmwareVersion = _f.CommandString("GSFR");
-                ShowNonBlockingMessageBox($"v{firmwareVersion}", "Firmware version");
+                ShowNonBlockingMessageBox($"Required: {_f.GetFirmwareVersion()}.X\r\nInstalled: {_f.GetInstalledFirmwareVersion()}", "Firmware version");
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                MessageBox.Show($"Connection to the focuser failed ({ex.Message})", "Error");
-            }
-            finally
-            {
-                if (_f.Connected)
-                    _f.Connected = false;
+                MessageBox.Show($"Firmware version check failed ({ex.Message})", "Error");
             }
         }
 

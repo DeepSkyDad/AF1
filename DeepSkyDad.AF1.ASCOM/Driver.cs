@@ -72,7 +72,7 @@ namespace ASCOM.DeepSkyDad.AF1
         /// </summary>
         private static string driverDescription = "ASCOM Deep Sky Dad AF1";
 
-        private static string firmwareVersion = "Board=DeepSkyDad.AF1, Version=1.1.0";
+        private static string firmwareVersion = "Board=DeepSkyDad.AF1, Version=1.2";
 
         internal static string comPortProfileName = "COM Port"; // Constants used for Profile persistence
         internal static string comPortDefault = "COM10";
@@ -80,6 +80,8 @@ namespace ASCOM.DeepSkyDad.AF1
         internal static string traceStateDefault = "false";
         internal static string stepSizeProfileName = "Step size";
         internal static string stepSizeDefault = "1/2";
+        internal static string speedModeProfileName = "Speed mode";
+        internal static string speedModeDefaultValue = "High";
         internal static string maxPositionProfileName = "Maximum positions";
         internal static string maxPositionDefault = "100000";
         internal static string maxMovementProfileName = "Maximum movement";
@@ -107,6 +109,7 @@ namespace ASCOM.DeepSkyDad.AF1
         internal static int maxPosition;
         internal static int maxMovement;
         internal static string stepSize;
+        internal static string speedMode;
         internal static bool traceState;
         internal static bool resetOnConnect;
         internal static bool setPositonOnConnect;
@@ -168,6 +171,43 @@ namespace ASCOM.DeepSkyDad.AF1
             //TODO: Implement your additional construction here
 
             tl.LogMessage("Focuser", "Completed initialisation");
+        }
+
+        public string GetFirmwareVersion()
+        {
+            return firmwareVersion;
+        }
+
+        public string GetInstalledFirmwareVersion()
+        {
+            if (Connected)
+                return CommandString("GFRL");
+
+            serial = new Serial();
+            serial.Speed = SerialSpeed.ps9600;
+            serial.PortName = comPort;
+            serial.DTREnable = false;
+            //serial.Handshake = SerialHandshake.None;
+            serial.Connected = true;
+            serial.ReceiveTimeoutMs = commandTimeout;
+            //serial.ReceiveTerminated("(READY)"); //wait for ready signal - this is needed because arduino auto-resets when serial connection is established to it (it can be prevented by putting capacitor between 5v and reset but not neccessary for autofocuser)
+
+            string actualBoard = string.Empty;
+            try
+            {
+                return CommandString("GFRM");
+            }
+            catch (Exception)
+            {
+                //retry
+                return CommandString("GFRM");
+            }
+            finally
+            {
+                serial.Connected = false;
+                serial.Dispose();
+                serial = null;
+            }
         }
 
 
@@ -296,13 +336,14 @@ namespace ASCOM.DeepSkyDad.AF1
                     {
                         actualFirmwareVersion = CommandString("GFRM");
                     }
-                    catch(Exception)
+                    catch (Exception)
                     {
+                        //retry
                         actualFirmwareVersion = CommandString("GFRM");
                     }
 
-                    if (actualFirmwareVersion != firmwareVersion)
-                        throw new ASCOM.DriverException($"Invalid firmware version - required: {firmwareVersion}, installed {actualFirmwareVersion}");
+                    if (!actualFirmwareVersion.StartsWith(firmwareVersion))
+                        throw new ASCOM.DriverException($"Invalid firmware version - required: {firmwareVersion}.X, installed {actualFirmwareVersion}");
 
                     if (resetOnConnect)
                     {
@@ -351,6 +392,20 @@ namespace ASCOM.DeepSkyDad.AF1
                         ss = 8;
                     }
 
+                    var spd = 3;
+                    if (speedMode == "Low")
+                    {
+                        spd = 1;
+                    }
+                    else if (speedMode == "Medium")
+                    {
+                        spd = 2;
+                    }
+                    else if (stepSize == "High")
+                    {
+                        spd = 3;
+                    }
+
                     var coilsModeInt = 1;
                     switch(coilsMode)
                     {
@@ -366,6 +421,7 @@ namespace ASCOM.DeepSkyDad.AF1
                     }
 
                     CommandString($"CONF{ss}|{coilsModeInt}|{(reverseDirection ? 1 : 0)}|{maxPosition}|{maxMovement}|{settleBuffer}|{idleCoilsTimeout}|180000|{currentMove}|{currentHold}");
+                    CommandString($"SSPD{spd}");
                     //CommandString($"SREV{(reverseDirection ? 1 : 0)}");
                     //CommandString($"SMXP{maxPosition}");
                     //CommandString($"SMXM{maxMovement}");
@@ -684,6 +740,7 @@ namespace ASCOM.DeepSkyDad.AF1
                 maxPosition = Convert.ToInt32(driverProfile.GetValue(driverID, maxPositionProfileName, string.Empty, maxPositionDefault));
                 maxMovement = Convert.ToInt32(driverProfile.GetValue(driverID, maxMovementProfileName, string.Empty, maxMovementDefault));
                 stepSize = driverProfile.GetValue(driverID, stepSizeProfileName, string.Empty, stepSizeDefault);
+                speedMode = driverProfile.GetValue(driverID, speedModeProfileName, string.Empty, speedModeDefaultValue);
                 resetOnConnect = Convert.ToBoolean(driverProfile.GetValue(driverID, resetOnConnectProfileName, string.Empty, resetOnConnectDefault));
                 setPositonOnConnect = Convert.ToBoolean(driverProfile.GetValue(driverID, setPositonOnConnectProfileName, string.Empty, setPositonOnConnectDefault));
                 setPositionOnConnectValue = Convert.ToInt32(driverProfile.GetValue(driverID, setPositonOnConnectValueProfileName, string.Empty, setPositonOnConnectValueDefault)); ;
@@ -707,6 +764,7 @@ namespace ASCOM.DeepSkyDad.AF1
                 driverProfile.WriteValue(driverID, traceStateProfileName, traceState.ToString());
                 driverProfile.WriteValue(driverID, comPortProfileName, comPort);
                 driverProfile.WriteValue(driverID, stepSizeProfileName, stepSize);
+                driverProfile.WriteValue(driverID, speedModeProfileName, speedMode);
                 driverProfile.WriteValue(driverID, maxPositionProfileName, maxPosition.ToString());
                 driverProfile.WriteValue(driverID, maxMovementProfileName, maxMovement.ToString());
                 driverProfile.WriteValue(driverID, resetOnConnectProfileName, resetOnConnect.ToString());

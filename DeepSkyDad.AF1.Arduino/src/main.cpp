@@ -6,7 +6,7 @@
     Each index contains different property, with last one containing checksum (sum of all previous values, so we can validate its contents).
     Additionally, values are saved to a different address every time. Writing to same address every time would wear EEPROM out faster.
     Autofocuseer state:
-    {<position>, <maxPosition>, <maxMovement>, <stepMode>, <coilsMode>, <settleBufferMs>, <idleCoilsTimeoutMs>, <idleEepromWriteMs>, <reverseDirection>, <currentMove>, <currentHold>, <checksum>}
+    {<position>, <maxPosition>, <maxMovement>, <stepMode>, <speedMode>, <coilsMode>, <settleBufferMs>, <idleCoilsTimeoutMs>, <idleEepromWriteMs>, <reverseDirection>, <currentMove>, <currentHold>, <checksum>}
 
   COMMAND SET
     Commands are executed via serial COM port communication. 
@@ -31,6 +31,9 @@
     -revised coils control (always on, idle of or idle after a period of inactivity)
     -reduced motor vibration
     -optimised speed
+
+    version 1.2.0 - 14.3.2019 
+    -added speed selection option
 */
 
 #include <Arduino.h>
@@ -40,19 +43,20 @@
 #define EEPROM_AF_STATE_MAX_POSITION 1
 #define EEPROM_AF_STATE_MAX_MOVEMENT 2
 #define EEPROM_AF_STATE_STEP_MODE 3
-#define EEPROM_AF_STATE_COILS_MODE 4
-#define EEPROM_AF_STATE_SETTLE_BUFFER_MS 5
-#define EEPROM_AF_STATE_IDLE_COILS_TIMEOUT_MS 6
-#define EEPROM_AF_STATE_IDLE_EEPROM_WRITE_MS 7
-#define EEPROM_AF_STATE_REVERSE_DIRECTION 8
-#define EEPROM_AF_STATE_CURRENT_MOVE 9
-#define EEPROM_AF_STATE_CURRENT_HOLD 10
-#define EEPROM_AF_STATE_CHECKSUM 11
+#define EEPROM_AF_STATE_SPEED_MODE 4
+#define EEPROM_AF_STATE_COILS_MODE 5
+#define EEPROM_AF_STATE_SETTLE_BUFFER_MS 6
+#define EEPROM_AF_STATE_IDLE_COILS_TIMEOUT_MS 7
+#define EEPROM_AF_STATE_IDLE_EEPROM_WRITE_MS 8
+#define EEPROM_AF_STATE_REVERSE_DIRECTION 9
+#define EEPROM_AF_STATE_CURRENT_MOVE 10
+#define EEPROM_AF_STATE_CURRENT_HOLD 11
+#define EEPROM_AF_STATE_CHECKSUM 12
 
-//{<position>, <maxPosition>, <maxMovement>, <stepMode>, <coilsMode>, <settleBufferMs>, <idleCoilsTimeoutMs>, <idleEepromWriteMs>, <reverseDirection>, <currentMove>, <currentHold>, <checksum>}
-long _eepromAfState[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9999};
-long _eepromAfPrevState[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9999};
-long _eepromAfStateDefault[] = {50000, 100000, 5000, 2, 1, 0, 60000, 180000, 0, 140, 180, 0};
+//{<position>, <maxPosition>, <maxMovement>, <stepMode>, <speedMode>, <coilsMode>, <settleBufferMs>, <idleCoilsTimeoutMs>, <idleEepromWriteMs>, <reverseDirection>, <currentMove>, <currentHold>, <checksum>}
+long _eepromAfState[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9999};
+long _eepromAfPrevState[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9999};
+long _eepromAfStateDefault[] = {50000, 100000, 5000, 2, 3, 1, 0, 60000, 180000, 0, 140, 180, 0};
 int _eepromAfStatePropertyCount = sizeof(_eepromAfState) / sizeof(long);
 int _eepromAfStateAddressSize = sizeof(_eepromAfState);
 int _eepromAfStateAdressesCount = EEPROMSizeATmega328 / _eepromAfStateAddressSize;
@@ -85,6 +89,7 @@ long _motorSettleBufferPrevMs;
 long _motorIsMovingLastRunMs;
 long _motorLastMoveCoilsMs;
 long _motorLastMoveEepromMs;
+long _motorSpeedFactor;
 
 /* Serial communication */
 char _serialCommandRaw[70];
@@ -95,8 +100,7 @@ char _commandParam[65];
 int _commandParamLength;
 
 const char firmwareName[] = "DeepSkyDad.AF1";
-const char firmwareVersion[] = "1.1.0";
-const char firmwareSubversion[] = "1.1.0";
+const char firmwareVersion[] = "1.2.0";
 
 /* EEPROM functions */
 bool eepromValidateChecksum()
@@ -326,6 +330,19 @@ void setStepMode(char param[])
   }
 }
 
+void setSpeedMode(char param[])
+{
+  long speedMode = strtol(param, NULL, 10);
+  if (speedMode != 1 && speedMode != 2 && speedMode != 3)
+  {
+    return;
+  }
+  else
+  {
+     _eepromAfState[EEPROM_AF_STATE_SPEED_MODE] = speedMode;
+  }
+}
+
 void setReverseDir(char param[])
 {
   long motorDir = strtol(param, NULL, 10);
@@ -449,12 +466,6 @@ void executeCommand()
     Serial.print(firmwareVersion);
     Serial.print(")");
   }
-  else if (strcmp("GSFR", _command) == 0)
-  {
-    Serial.print("(");
-    Serial.print(firmwareSubversion);
-    Serial.print(")");
-  }
   else if (strcmp("GPOS", _command) == 0)
   {
     printResponse(_eepromAfState[EEPROM_AF_STATE_POSITION]);
@@ -536,6 +547,22 @@ void executeCommand()
     */
     delayMicroseconds(1000);
     _motorIsMovingLastRunMs = millis();
+
+    switch (_eepromAfState[EEPROM_AF_STATE_SPEED_MODE])
+    {
+    case 1:
+        _motorSpeedFactor = 30;
+        break;
+    case 2:
+        _motorSpeedFactor = 12;
+        break;
+    case 3:
+        _motorSpeedFactor = 1;
+        break;
+    default:
+        _motorSpeedFactor = 1;
+        break;
+    }
   }
   else if (strcmp("STOP", _command) == 0)
   {
@@ -569,6 +596,16 @@ void executeCommand()
   else if (strcmp("SSTP", _command) == 0)
   {
     setStepMode(_commandParam);
+    _eepromSaveAfState = true;
+    printSuccess();
+  }
+  else if (strcmp("GSPD", _command) == 0)
+  {
+    printResponse((int)_eepromAfState[EEPROM_AF_STATE_SPEED_MODE]);
+  }
+  else if (strcmp("SSPD", _command) == 0)
+  {
+    setSpeedMode(_commandParam);
     _eepromSaveAfState = true;
     printSuccess();
   }
@@ -851,7 +888,7 @@ void loop()
         delayMicroseconds(1);
         digitalWrite(MP6500_PIN_STEP, 0);
         _eepromAfState[EEPROM_AF_STATE_POSITION]--;
-        delayMicroseconds(1600 / _eepromAfState[EEPROM_AF_STATE_STEP_MODE]);
+        delayMicroseconds(1600 / _eepromAfState[EEPROM_AF_STATE_STEP_MODE] * _motorSpeedFactor);
       }
       else if (_motorTargetPosition > _eepromAfState[EEPROM_AF_STATE_POSITION])
       {
@@ -860,7 +897,7 @@ void loop()
         delayMicroseconds(1);
         digitalWrite(MP6500_PIN_STEP, 0);
         _eepromAfState[EEPROM_AF_STATE_POSITION]++;
-        delayMicroseconds(1600 / _eepromAfState[EEPROM_AF_STATE_STEP_MODE]);
+        delayMicroseconds(1600 / _eepromAfState[EEPROM_AF_STATE_STEP_MODE] * _motorSpeedFactor);
       }
       else
       {
