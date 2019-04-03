@@ -34,10 +34,16 @@
 
     version 1.2.0 - 14.3.2019 
     -added speed selection option
+
+    version 1.2.1 - 3.4.2019
+    -motor noise fix (the PWM frequency of pin 6, which controls the current was changed from audible 1kHz to inaudible 64kHz
+    Details: the upgrade required moving the timing functions from Timer 0 to Timer 2, as the pin 6 is bound to the Timer 0. 
+    Without this, changing the frequency would throw off timing functions. 
 */
 
 #include <Arduino.h>
 #include <EEPROMEx.h>
+#include "wiring.h"
 
 #define EEPROM_AF_STATE_POSITION 0
 #define EEPROM_AF_STATE_MAX_POSITION 1
@@ -84,11 +90,11 @@ long MP6500_PIN_I1_HOLD_RANGE = MP6500_PIN_I1_HOLD_MAX - MP6500_PIN_I1_HOLD_MIN;
 
 /* MOTOR */
 bool _motorIsMoving;
-long _motorTargetPosition;
-long _motorSettleBufferPrevMs;
-long _motorIsMovingLastRunMs;
-long _motorLastMoveCoilsMs;
-long _motorLastMoveEepromMs;
+unsigned long _motorTargetPosition;
+unsigned long _motorSettleBufferPrevMs;
+unsigned long _motorIsMovingLastRunMs;
+unsigned long _motorLastMoveCoilsMs;
+unsigned long _motorLastMoveEepromMs;
 long _motorSpeedFactor;
 
 /* Serial communication */
@@ -101,6 +107,27 @@ int _commandParamLength;
 
 const char firmwareName[] = "DeepSkyDad.AF1";
 const char firmwareVersion[] = "1.2.0";
+
+int main( void )
+{
+  init();
+
+  //https://forum.arduino.cc/index.php?topic=430814.0
+  //initVariant();
+
+  #if defined(USBCON)
+    USBDevice.attach();
+  #endif
+	
+	setup();
+    
+	for (;;) {
+		loop();
+    if (serialEventRun) serialEventRun();
+	}
+        
+	return 0;
+}
 
 /* EEPROM functions */
 bool eepromValidateChecksum()
@@ -205,6 +232,13 @@ void printResponse(long response)
   Serial.print(")");
 }
 
+void printResponse(unsigned long response)
+{
+  Serial.print("(");
+  Serial.print(response);
+  Serial.print(")");
+}
+
 void printResponse(char response[])
 {
   Serial.print("(");
@@ -245,7 +279,7 @@ void writeCoilsMode()
   {
     if (_motorLastMoveCoilsMs != 0L)
     {
-      if ((millis() - _motorLastMoveCoilsMs) > (unsigned)_eepromAfState[EEPROM_AF_STATE_IDLE_COILS_TIMEOUT_MS])
+      if ((millis() - _motorLastMoveCoilsMs) > (unsigned long)_eepromAfState[EEPROM_AF_STATE_IDLE_COILS_TIMEOUT_MS])
       {
         digitalWrite(MP6500_PIN_SLP, LOW);
         _motorLastMoveCoilsMs = 0L;
@@ -358,7 +392,7 @@ void setMaxPos(char param[])
   if (maxPos < 10000)
     maxPos = 10000;
 
-  if (_motorTargetPosition > maxPos)
+  if (_motorTargetPosition > (unsigned long)maxPos)
     _motorTargetPosition = maxPos;
 
   if (_eepromAfState[EEPROM_AF_STATE_POSITION] > maxPos)
@@ -491,7 +525,7 @@ void executeCommand()
     }
     else
     {
-      if (_motorTargetPosition == pos)
+      if (_motorTargetPosition == (unsigned long)pos)
       {
         printSuccess();
         return;
@@ -518,7 +552,7 @@ void executeCommand()
       if (_eepromAfState[EEPROM_AF_STATE_SETTLE_BUFFER_MS] > 0L && _motorSettleBufferPrevMs != 0L)
       {
         long settleBufferCurrenMs = millis();
-        if ((settleBufferCurrenMs - _motorSettleBufferPrevMs) < _eepromAfState[EEPROM_AF_STATE_SETTLE_BUFFER_MS])
+        if ((settleBufferCurrenMs - _motorSettleBufferPrevMs) < (unsigned long)_eepromAfState[EEPROM_AF_STATE_SETTLE_BUFFER_MS])
         {
           printResponse(1);
         }
@@ -746,6 +780,12 @@ void executeCommand()
     _eepromSaveAfState = true;
     printSuccess();
   }
+  else if (strcmp("SPWF", _command) == 0) {
+   
+    long divisor = strtol(_commandParam, NULL, 10);
+    setPwmFrequency(6, divisor);
+    printSuccess();
+  }
   else if (strcmp("CONF", _command) == 0)
   {
     //COMMAND FORMAT: "CONF{stepMode}|{coilsMode}|{reverseDirection}|{maxPosition}|{maxMovement}|{settleBuffer}|{idleCoilsTimeoutMs}|{idleEepromWriteMs}|{currentMove}|{currentHold}";
@@ -816,7 +856,7 @@ void executeCommand()
     Serial.println(_eepromAfState[EEPROM_AF_STATE_REVERSE_DIRECTION]);
     Serial.print("Idle coils timeout (ms): ");
     Serial.println(_eepromAfState[EEPROM_AF_STATE_IDLE_COILS_TIMEOUT_MS]);
-    Serial.print("Idle eeprom write ms): ");
+    Serial.print("Idle eeprom write (ms): ");
     Serial.println(_eepromAfState[EEPROM_AF_STATE_IDLE_EEPROM_WRITE_MS]);
     Serial.print("Move current: ");
     Serial.println(_eepromAfState[EEPROM_AF_STATE_CURRENT_MOVE]);
@@ -873,15 +913,15 @@ void setup()
   _motorLastMoveCoilsMs = 0L;
   _motorLastMoveEepromMs = 0L;
 }
-
+unsigned long test = millis();
 void loop()
-{
+{ 
   if (_motorIsMoving)
   {
     //give priority to motor with dedicated 300ms loops (effectivly pausing main loop, including serial event processing)
     while (millis() - _motorIsMovingLastRunMs < 300)
     {
-      if (_motorTargetPosition < _eepromAfState[EEPROM_AF_STATE_POSITION])
+      if (_motorTargetPosition < (unsigned long)_eepromAfState[EEPROM_AF_STATE_POSITION])
       {
         digitalWrite(MP6500_PIN_DIR, _eepromAfState[EEPROM_AF_STATE_REVERSE_DIRECTION] == 0 ? LOW : HIGH);
         digitalWrite(MP6500_PIN_STEP, 1);
@@ -890,7 +930,7 @@ void loop()
         _eepromAfState[EEPROM_AF_STATE_POSITION]--;
         delayMicroseconds(1600 / _eepromAfState[EEPROM_AF_STATE_STEP_MODE] * _motorSpeedFactor);
       }
-      else if (_motorTargetPosition > _eepromAfState[EEPROM_AF_STATE_POSITION])
+      else if (_motorTargetPosition > (unsigned long)_eepromAfState[EEPROM_AF_STATE_POSITION])
       {
         digitalWrite(MP6500_PIN_DIR, _eepromAfState[EEPROM_AF_STATE_REVERSE_DIRECTION] == 0 ? HIGH : LOW);
         digitalWrite(MP6500_PIN_STEP, 1);
@@ -910,13 +950,13 @@ void loop()
   }
   else
   {
-    if (_motorLastMoveCoilsMs != 0L && _eepromAfState[EEPROM_AF_STATE_COILS_MODE] == 2 && (millis() - _motorLastMoveCoilsMs) > (unsigned)_eepromAfState[EEPROM_AF_STATE_IDLE_COILS_TIMEOUT_MS])
+    if (_motorLastMoveCoilsMs != 0L && _eepromAfState[EEPROM_AF_STATE_COILS_MODE] == 2 && (millis() - _motorLastMoveCoilsMs) > (unsigned long)_eepromAfState[EEPROM_AF_STATE_IDLE_COILS_TIMEOUT_MS])
     {
       writeCoilsMode();
     }
 
     //save eeprom only after period of time from last movement (prevent EEPROM wear with write after each move)
-    if (_motorLastMoveEepromMs != 0L && (millis() - _motorLastMoveEepromMs) > (unsigned)_eepromAfState[EEPROM_AF_STATE_IDLE_EEPROM_WRITE_MS])
+    if (_motorLastMoveEepromMs != 0L && (millis() - _motorLastMoveEepromMs) > (unsigned long)_eepromAfState[EEPROM_AF_STATE_IDLE_EEPROM_WRITE_MS])
     {
       _eepromSaveAfState = true;
     }
