@@ -106,7 +106,7 @@ char _commandParam[65];
 int _commandParamLength;
 
 const char firmwareName[] = "DeepSkyDad.AF1";
-const char firmwareVersion[] = "1.2.0";
+const char firmwareVersion[] = "1.2.1";
 
 int main( void )
 {
