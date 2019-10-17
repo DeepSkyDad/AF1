@@ -55,6 +55,8 @@ namespace ASCOM.DeepSkyDad.AF1
             this.label8 = new System.Windows.Forms.Label();
             this.currentHoldComboBox = new System.Windows.Forms.ComboBox();
             this.advancedPanel = new System.Windows.Forms.Panel();
+            this.label15 = new System.Windows.Forms.Label();
+            this.comboBoxSpeedMode = new System.Windows.Forms.ComboBox();
             this.label10 = new System.Windows.Forms.Label();
             this.label14 = new System.Windows.Forms.Label();
             this.label13 = new System.Windows.Forms.Label();
@@ -63,8 +65,6 @@ namespace ASCOM.DeepSkyDad.AF1
             this.idleCoilsTimeoutNumeric = new System.Windows.Forms.NumericUpDown();
             this.label9 = new System.Windows.Forms.Label();
             this.showAdvancedBtn = new System.Windows.Forms.Button();
-            this.label15 = new System.Windows.Forms.Label();
-            this.comboBoxSpeedMode = new System.Windows.Forms.ComboBox();
             ((System.ComponentModel.ISupportInitialize)(this.picASCOM)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownSettleBuffer)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpMaxPosition)).BeginInit();
@@ -316,11 +316,6 @@ namespace ASCOM.DeepSkyDad.AF1
             0,
             0,
             0});
-            this.numericSetPositionOnConnectValue.Minimum = new decimal(new int[] {
-            10000,
-            0,
-            0,
-            0});
             this.numericSetPositionOnConnectValue.Name = "numericSetPositionOnConnectValue";
             this.numericSetPositionOnConnectValue.Size = new System.Drawing.Size(121, 20);
             this.numericSetPositionOnConnectValue.TabIndex = 33;
@@ -421,6 +416,27 @@ namespace ASCOM.DeepSkyDad.AF1
             this.advancedPanel.TabIndex = 40;
             this.advancedPanel.Visible = false;
             // 
+            // label15
+            // 
+            this.label15.AutoSize = true;
+            this.label15.Location = new System.Drawing.Point(29, 72);
+            this.label15.Name = "label15";
+            this.label15.Size = new System.Drawing.Size(67, 13);
+            this.label15.TabIndex = 49;
+            this.label15.Text = "Speed mode";
+            // 
+            // comboBoxSpeedMode
+            // 
+            this.comboBoxSpeedMode.FormattingEnabled = true;
+            this.comboBoxSpeedMode.Items.AddRange(new object[] {
+            "Low",
+            "Medium",
+            "High"});
+            this.comboBoxSpeedMode.Location = new System.Drawing.Point(175, 68);
+            this.comboBoxSpeedMode.Name = "comboBoxSpeedMode";
+            this.comboBoxSpeedMode.Size = new System.Drawing.Size(121, 21);
+            this.comboBoxSpeedMode.TabIndex = 48;
+            // 
             // label10
             // 
             this.label10.AutoSize = true;
@@ -513,27 +529,6 @@ namespace ASCOM.DeepSkyDad.AF1
             this.showAdvancedBtn.Text = "Advanced >>";
             this.showAdvancedBtn.UseVisualStyleBackColor = true;
             this.showAdvancedBtn.Click += new System.EventHandler(this.showAdvancedBtn_Click);
-            // 
-            // label15
-            // 
-            this.label15.AutoSize = true;
-            this.label15.Location = new System.Drawing.Point(29, 72);
-            this.label15.Name = "label15";
-            this.label15.Size = new System.Drawing.Size(67, 13);
-            this.label15.TabIndex = 49;
-            this.label15.Text = "Speed mode";
-            // 
-            // comboBoxSpeedMode
-            // 
-            this.comboBoxSpeedMode.FormattingEnabled = true;
-            this.comboBoxSpeedMode.Items.AddRange(new object[] {
-            "Low",
-            "Medium",
-            "High"});
-            this.comboBoxSpeedMode.Location = new System.Drawing.Point(175, 68);
-            this.comboBoxSpeedMode.Name = "comboBoxSpeedMode";
-            this.comboBoxSpeedMode.Size = new System.Drawing.Size(121, 21);
-            this.comboBoxSpeedMode.TabIndex = 48;
             // 
             // SetupDialogForm
             // 

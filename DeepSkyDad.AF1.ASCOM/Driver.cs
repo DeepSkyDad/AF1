@@ -358,7 +358,7 @@ namespace ASCOM.DeepSkyDad.AF1
                         CommandString("RSET");
                     }
 
-                    if(setPositonOnConnect)
+                    if (setPositonOnConnect)
                     {
                         //deselect the flag
                         using (Profile driverProfile = new Profile())
@@ -368,11 +368,15 @@ namespace ASCOM.DeepSkyDad.AF1
                             driverProfile.WriteValue(driverID, setPositonOnConnectProfileName, setPositonOnConnect.ToString());
                         }
 
+                        tl.LogMessage($"Set position START - requested: {setPositionOnConnectValue}", driverDescription);
                         CommandString($"SPOS{setPositionOnConnectValue}");
-                        setPositionOnConnectValue = maxPosition / 2;
+                        focuserPosition = (int)CommandLong("GPOS");
+                        tl.LogMessage($"Set position END - requested: {setPositionOnConnectValue}, actual: {focuserPosition}", driverDescription);
                     }
-                    
-                    focuserPosition = (int)CommandLong("GPOS");
+                    else
+                    {
+                        focuserPosition = (int)CommandLong("GPOS");
+                    }
 
                     var ss = 2;
                     if (stepSize == "1")
